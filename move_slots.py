@@ -466,6 +466,10 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'подписант', self.cmbSigner.currentText()])
         else:
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'подписант', 'не выбран'])
+        if self.chbClientOnly.isChecked():
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Перенести только клиента', 'выбрано'])
+        else:
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Перенести только клиента', 'не выбрано'])
         if self.chbSocium.isChecked():
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Сбросить номер Социума', 'выбрано'])
         else:
@@ -526,7 +530,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             self.leSQLcl.setText('')
         else:
             self.leSQLcl.setText(sql_cl + ' WHERE cl.client_id = %s')
-        if sql_co[len(sql_co) - 3:] == 'SET':
+        if sql_co[len(sql_co) - 3:] == 'SET' or self.chbClientOnly.isChecked():
             self.leSQLco.setText('')
         else:
             self.leSQLco.setText(sql_co + ' WHERE co.client_id = %s')

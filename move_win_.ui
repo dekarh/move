@@ -40,7 +40,7 @@
         <property name="maximumSize">
          <size>
           <width>600</width>
-          <height>480</height>
+          <height>500</height>
          </size>
         </property>
         <property name="frameShape">
@@ -530,6 +530,13 @@
                <property name="bottomMargin">
                 <number>0</number>
                </property>
+               <item>
+                <widget class="QCheckBox" name="chbClientOnly">
+                 <property name="text">
+                  <string>перенести только клиента</string>
+                 </property>
+                </widget>
+               </item>
                <item>
                 <widget class="QCheckBox" name="chbSocium">
                  <property name="sizePolicy">
