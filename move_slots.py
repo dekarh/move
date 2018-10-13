@@ -1042,6 +1042,30 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             for row in doubles_in_input:
                 ws_input_doubles.append(row)
 
+        ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Состояние программы:'])
+        ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Исходный файл ', self.file_name])
+        ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Конфигурационный файл ', self.cmbCfgFile.currentText()])
+        if self.leFond.isEnabled():
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'фонд', self.cmbFond.currentText()])
+        else:
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'фонд', 'не выбран'])
+        if self.leAgent.isEnabled():
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'агент', self.cmbAgent.currentText()])
+        else:
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'агент', 'не выбран'])
+        if self.leSigner.isEnabled():
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'подписант', self.cmbSigner.currentText()])
+        else:
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'подписант', 'не выбран'])
+
+        ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Дублируем исходную excel таблицу в файл лога'])
+        ws_input = wb_log.create_sheet('Исходная таблица')
+        for table_row in self.table:
+            row = []
+            for cell in table_row:
+                row.append(cell)
+            ws_input.append(row)
+
         self.updateProgressBar(0)
         self.pbImport.setEnabled(False)
 
@@ -1051,14 +1075,8 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         self.workerThread.progress_value.connect(self.updateProgressBar)
         self.workerThread.start()
         self.updateProgressBar(0)
-        ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Дублируем исходную excel таблицу в файл лога'])
-        ws_input = wb_log.create_sheet('Исходная таблица')
-        for table_row in self.table:
-            row = []
-            for cell in table_row:
-                row.append(cell)
-            ws_input.append(row)
         self.pbImport.setEnabled(True)
+        ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Импорт отработал, файл(ы) создан(ы)'])
         wb_log.save(log_name)
 
 
