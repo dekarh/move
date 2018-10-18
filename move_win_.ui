@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1099</width>
-    <height>795</height>
+    <width>1120</width>
+    <height>808</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -40,7 +40,7 @@
         <property name="maximumSize">
          <size>
           <width>600</width>
-          <height>500</height>
+          <height>510</height>
          </size>
         </property>
         <property name="frameShape">
@@ -92,7 +92,7 @@
                </sizepolicy>
               </property>
               <property name="text">
-               <string>/home/da3/Загрузки/</string>
+               <string>/home/da3/Загрузки/перенос/</string>
               </property>
              </widget>
             </item>
@@ -642,9 +642,16 @@
                 </widget>
                </item>
                <item>
-                <widget class="QCheckBox" name="chbArhiv">
+                <widget class="QCheckBox" name="chbArhivON">
                  <property name="text">
                   <string>Поставить флаг &quot;Архивный&quot;</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="chbArhivOFF">
+                 <property name="text">
+                  <string>Сбросить флаг &quot;Архивный&quot;</string>
                  </property>
                 </widget>
                </item>
@@ -652,16 +659,170 @@
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="label">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
+             <widget class="QFrame" name="frame_2">
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
               </property>
-              <property name="text">
-               <string/>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
               </property>
+              <layout class="QVBoxLayout" name="verticalLayout_9">
+               <item>
+                <widget class="QLabel" name="lbDoubles">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string/>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QFrame" name="frDateFrom">
+                 <property name="frameShape">
+                  <enum>QFrame::NoFrame</enum>
+                 </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Raised</enum>
+                 </property>
+                 <property name="lineWidth">
+                  <number>0</number>
+                 </property>
+                 <layout class="QHBoxLayout" name="horizontalLayout_12">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QCheckBox" name="chbDateFrom">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>110</width>
+                      <height>0</height>
+                     </size>
+                    </property>
+                    <property name="text">
+                     <string>Выборка от</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDateEdit" name="deDateFrom">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
+                    <property name="dateTime">
+                     <datetime>
+                      <hour>0</hour>
+                      <minute>0</minute>
+                      <second>0</second>
+                      <year>2018</year>
+                      <month>1</month>
+                      <day>1</day>
+                     </datetime>
+                    </property>
+                    <property name="minimumDateTime">
+                     <datetime>
+                      <hour>0</hour>
+                      <minute>0</minute>
+                      <second>0</second>
+                      <year>1752</year>
+                      <month>9</month>
+                      <day>14</day>
+                     </datetime>
+                    </property>
+                    <property name="calendarPopup">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QFrame" name="frDateTo">
+                 <property name="frameShape">
+                  <enum>QFrame::NoFrame</enum>
+                 </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Raised</enum>
+                 </property>
+                 <property name="lineWidth">
+                  <number>0</number>
+                 </property>
+                 <layout class="QHBoxLayout" name="horizontalLayout_13">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QCheckBox" name="chbDateTo">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>110</width>
+                      <height>0</height>
+                     </size>
+                    </property>
+                    <property name="text">
+                     <string>Выборка до</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDateEdit" name="deDateTo">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
+                    <property name="dateTime">
+                     <datetime>
+                      <hour>0</hour>
+                      <minute>0</minute>
+                      <second>0</second>
+                      <year>2018</year>
+                      <month>1</month>
+                      <day>1</day>
+                     </datetime>
+                    </property>
+                    <property name="calendarPopup">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+              </layout>
              </widget>
             </item>
            </layout>
@@ -692,7 +853,7 @@
              <number>0</number>
             </property>
             <item>
-             <widget class="QLabel" name="lSQLcl">
+             <widget class="QLabel" name="lbSQLcl">
               <property name="text">
                <string>client     </string>
               </property>
@@ -732,7 +893,7 @@
              <number>0</number>
             </property>
             <item>
-             <widget class="QLabel" name="lSQLco">
+             <widget class="QLabel" name="lbSQLco">
               <property name="text">
                <string>contract</string>
               </property>
@@ -852,6 +1013,123 @@
                  </property>
                  <property name="text">
                   <string>Импорт</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QFrame" name="frPasport">
+           <property name="frameShape">
+            <enum>QFrame::StyledPanel</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Raised</enum>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_10">
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QFrame" name="frame_10">
+              <property name="frameShape">
+               <enum>QFrame::NoFrame</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_14">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QPushButton" name="pbIdGenerate4PasportCheck">
+                 <property name="minimumSize">
+                  <size>
+                   <width>100</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Генерация</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_5">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>304</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QCommandLinkButton" name="clbPasport">
+                 <property name="maximumSize">
+                  <size>
+                   <width>45</width>
+                   <height>45</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string/>
+                 </property>
+                 <property name="icon">
+                  <iconset>
+                   <normaloff>orel.png</normaloff>orel.png</iconset>
+                 </property>
+                 <property name="iconSize">
+                  <size>
+                   <width>30</width>
+                   <height>30</height>
+                  </size>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_6">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>304</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QPushButton" name="pbPasportCheck">
+                 <property name="minimumSize">
+                  <size>
+                   <width>100</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Проверить</string>
                  </property>
                 </widget>
                </item>

@@ -139,13 +139,14 @@ HEAD_RESULT_EXCEL_FILE = ['СНИЛС',
 
 
 
-IN_IDS = ['ID','ИД_Клиента','client_id']
+IN_IDS = ['ID','ИД_Клиента','client_id','id']
 IN_SNILS = ['СНИЛС', 'Страховой_номер', 'number']
-IN_NAMES = ['ID', 'СНИЛС', 'Страховой_номер', 'number', 'Фамилия', 'Имя', 'Отчество']
+IN_NAMES = ['ID', 'СНИЛС', 'Страховой_номер', 'number', 'Фамилия', 'Имя', 'Отчество', 'ФИО']
 
 DIR4MOVE = '/home/da3/Move/'
 DIR4IMPORT = '/home/da3/CheckLoad/'
 DIR4CFGIMPORT = '/home/da3/CheckLoad/cfg/'
+DIR4PCHECK = '/home/da3/PasportChecks/'
 
 class MainWindowSlots(Ui_Form):   # Определяем функции, которые будем вызывать в слотах
 
@@ -157,7 +158,8 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             self.tableWidget.setColumnWidth(j, 220)
         self.tableWidget.setRowCount(0)
         self.dbconfig = read_config(filename='move.ini', section='mysql')
-        self.MoveImport = True
+        self.dbconfig_pasp = read_config(filename='move.ini', section='pasport')
+        self.MoveImportPasport = 1
         self.signer_ids = []
         self.signer_names = {}
         self.fond_ids = []
@@ -174,6 +176,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         self.cfg_file_names = {}
         self.file_touched = False
         self.file_loaded = False
+        self.table_loaded = False
         self.file_names = {}
         self.file_name = ''
         self.tab_names = {}
@@ -194,12 +197,19 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         if self.file_loaded:
             file_name = self.cmbFile.currentText()
             tab_name = self.cmbTab.currentText()
-        if self.MoveImport:
-            self.frImport.hide()
+        if self.MoveImportPasport == 1:
             self.frMove.show()
-        else:
+            self.frImport.hide()
+            self.frPasport.hide()
+        elif self.MoveImportPasport == 2:
             self.frImport.show()
             self.frMove.hide()
+            self.frPasport.hide()
+        else:
+            self.frPasport.show()
+            self.frMove.hide()
+            self.frImport.hide()
+
 
         dbconn = MySQLConnection(**self.dbconfig)
         cursor = dbconn.cursor()
@@ -302,13 +312,14 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                 if not self.file_loaded:
                     self.twAllExcels.setColumnCount(0)
                     self.twAllExcels.setRowCount(0)
-                    self.file_loaded = False
-                    self.file_touched = False
                     self.file_name = ''
                 else:
                     self.cmbFile.setCurrentIndex(self.file_names[file_name])
             except ValueError:
-                self.cfg_file_loaded = False
+                self.file_loaded = False
+                self.twAllExcels.setColumnCount(0)
+                self.twAllExcels.setRowCount(0)
+                self.file_name = ''
             else:
                 if self.file_loaded:
                     if self.cmbFile.currentText()[len(self.cmbFile.currentText()) - 5:] == '.xlsx':
@@ -341,7 +352,10 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             if self.file_loaded:
                 self.cmbTab.setCurrentIndex(self.tab_names[tab_name])
         except ValueError:
-            self.cfg_file_loaded = False
+            self.file_loaded = False
+            self.twAllExcels.setColumnCount(0)
+            self.twAllExcels.setRowCount(0)
+            self.file_name = ''
         try:
             if self.cfg_file_loaded:
                 self.cmbCfgFile.setCurrentIndex(self.cfg_file_names[cfg_file_name])
@@ -486,10 +500,14 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Сбросить статусы Фонда', 'выбрано'])
         else:
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Сбросить статусы Фонда', 'не выбрано'])
-        if self.chbArhiv.isChecked():
+        if self.chbArhivON.isChecked():
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Поставить флаг "Архивный"', 'выбрано'])
         else:
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Поставить флаг "Архивный"', 'не выбрано'])
+        if self.chbArhivOFF.isChecked():
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Убрать флаг "Архивный"', 'выбрано'])
+        else:
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Убрать флаг "Архивный"', 'не выбрано'])
 
         ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Формируем запросы:'])
         sql_cl = 'UPDATE saturn_crm.clients AS cl SET'
@@ -501,7 +519,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             if sql_cl[len(sql_cl) - 2:] == '%s':
                 sql_cl += ','
             sql_cl += ' cl.subdomain_id = %s'
-        if self.chbArhiv.isChecked():
+        if self.chbArhivON.isChecked() or self.chbArhivOFF.isChecked():
             if sql_cl[len(sql_cl) - 2:] == '%s':
                 sql_cl += ','
             sql_cl += ' cl.archived = %s'
@@ -546,8 +564,10 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                                    self.agent_ids[self.cmbAgent.currentIndex()])
             if self.leFond.isEnabled():
                 tuple_client += (self.fond_ids[self.cmbFond.currentIndex()],)
-            if self.chbArhiv.isChecked():
+            if self.chbArhivON.isChecked():
                 tuple_client += (1,)
+            if self.chbArhivOFF.isChecked():
+                tuple_client += (0,)
             if self.leSigner.isEnabled():
                 tuple_contract += (self.signer_ids[self.cmbSigner.currentIndex()],)
             if self.chbSocium.isChecked():
@@ -589,6 +609,36 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
 
         wb_log.save(log_name)
         q=0
+
+    def change_leAgent(self):
+        if self.agent_touched:
+            agent_id = self.agent_ids[self.cmbAgent.currentIndex()]
+        dbconn = MySQLConnection(**self.dbconfig)
+        cursor = dbconn.cursor()
+        if self.leAgent.text().strip():
+            sql = "SELECT CONCAT_WS(' ', code, '-', user_surname, user_name, user_lastname, '-', position_id), code " \
+                  "FROM saturn_crm.offices_staff WHERE user_fired = 0 AND " \
+                  "CONCAT_WS(' ', code, '-', user_surname, user_name, user_lastname, user_lastname) LIKE %s"
+            cursor.execute(sql, ('%' + self.leAgent.text() + '%',))
+        else:
+            sql = "SELECT CONCAT_WS(' ', code, '-', user_surname, user_name, user_lastname, '-', position_id), code " \
+                  "FROM saturn_crm.offices_staff WHERE user_fired = 0"
+            cursor.execute(sql)
+        rows = cursor.fetchall()
+        agents = []
+        self.agent_names = {}
+        self.agent_ids = []
+        for i, row in enumerate(rows):
+            agents.append(row[0])
+            self.agent_names[row[1]] = row[0]
+            self.agent_ids.append(row[1])
+        self.cmbAgent.clear()
+        self.cmbAgent.addItems(agents)
+        try:
+            if self.agent_touched:
+                self.cmbAgent.setCurrentIndex(self.agent_ids.index(agent_id))
+        except ValueError:
+            self.agent_touched = False
 
     def click_pbAgent(self):
         self.frAgent.setStyleSheet("QFrame{background-image: }")
@@ -724,6 +774,18 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         self.file_name = ''
         return
 
+    def click_chbDateFrom(self):
+        if self.deDateFrom.isEnabled():
+            self.deDateFrom.setEnabled(False)
+        else:
+            self.deDateFrom.setEnabled(True)
+
+    def click_chbDateTo(self):
+        if self.deDateTo.isEnabled():
+            self.deDateTo.setEnabled(False)
+        else:
+            self.deDateTo.setEnabled(True)
+
 
     def set_cmbFile(self):
         if self.leDir.text()[len(self.leDir.text()) - 1:] != '/':
@@ -740,23 +802,56 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
     def set_cmbTab(self):
         self.frFile.setStyleSheet("QFrame{background-image: }")
         self.file_touched = True
-        if self.MoveImport:
+        if self.MoveImportPasport == 1:
             self.load4move()
-        else:
+        elif self.MoveImportPasport == 2:
             self.load4import()
         return
 
     def click_clbMove(self):
-        self.MoveImport = False
-        self.frImport.show()
-        self.twParsingResult.show()
-        self.frMove.hide()
+        self.MoveImportPasport = 2
+        if self.MoveImportPasport == 1:
+            self.frMove.show()
+            self.frImport.hide()
+            self.frPasport.hide()
+        elif self.MoveImportPasport == 2:
+            self.frImport.show()
+            self.frMove.hide()
+            self.frPasport.hide()
+        else:
+            self.frPasport.show()
+            self.frMove.hide()
+            self.frImport.hide()
 
     def click_clbImport(self):
-        self.MoveImport = True
-        self.frImport.hide()
-        self.twParsingResult.hide()
-        self.frMove.show()
+        self.MoveImportPasport = 3
+        if self.MoveImportPasport == 1:
+            self.frMove.show()
+            self.frImport.hide()
+            self.frPasport.hide()
+        elif self.MoveImportPasport == 2:
+            self.frImport.show()
+            self.frMove.hide()
+            self.frPasport.hide()
+        else:
+            self.frPasport.show()
+            self.frMove.hide()
+            self.frImport.hide()
+
+    def click_clbPasport(self):
+        self.MoveImportPasport = 1
+        if self.MoveImportPasport == 1:
+            self.frMove.show()
+            self.frImport.hide()
+            self.frPasport.hide()
+        elif self.MoveImportPasport == 2:
+            self.frImport.show()
+            self.frMove.hide()
+            self.frPasport.hide()
+        else:
+            self.frPasport.show()
+            self.frMove.hide()
+            self.frImport.hide()
 
     def load4move(self):
         self.sheet = self.wb[self.wb.sheetnames[self.cmbTab.currentIndex()]]
@@ -810,6 +905,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         # делаем ресайз колонок по содержимому
         self.twAllExcels.resizeColumnsToContents()
         self.file_loaded = True
+        self.table_loaded = False
         if self.leDir.text()[len(self.leDir.text()) - 1:] != '/':
             self.leDir.setText(self.leDir.text() + '/')
         self.file_name = self.leDir.text() + self.cmbFile.currentText() + "!'" + self.cmbTab.currentText() + "'"
@@ -823,7 +919,136 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             self.table.append(table_row)
         return
 
-#!!!!!!!!!!!!!!!!!!!!! IMPORT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ПРОВЕРКА ПАСПОРТА !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    def click_pbIdGenerate4PasportCheck(self):
+        self.refresh()
+        self.frPasport.setStyleSheet("QFrame{background-image: }")
+                                                                                # Формируем запрос
+        sql_cl = 'SELECT client_id, p_seria, p_number, number, ' \
+                 'p_surname, p_name, p_lastname FROM saturn_crm.clients AS cl WHERE'
+        if self.leAgent.isEnabled():
+            sql_cl += ' cl.inserted_user_code = %s'
+        if self.leFond.isEnabled():
+            if sql_cl[len(sql_cl) - 2:] == '%s':
+                sql_cl += ' AND'
+            sql_cl += ' cl.subdomain_id = %s'
+        if self.chbDateFrom.isChecked():
+            if sql_cl[len(sql_cl) - 2:] == '%s':
+                sql_cl += ' AND'
+            sql_cl += ' cl.inserted_date >= %s'
+        if self.chbDateTo.isChecked():
+            if sql_cl[len(sql_cl) - 2:] == '%s':
+                sql_cl += ' AND'
+            sql_cl += ' cl.inserted_date <= %s'
+        if sql_cl[len(sql_cl) - 5:] == 'WHERE':
+            self.errMessage('Нет ни одного ЗЛ')
+            return
+        tuple_client = tuple()                                  # Формируем переменные для запросов
+        if self.leAgent.isEnabled():
+            tuple_client += (self.agent_ids[self.cmbAgent.currentIndex()],)
+        if self.leFond.isEnabled():
+            tuple_client += (self.fond_ids[self.cmbFond.currentIndex()],)
+        if self.chbDateFrom.isChecked():
+            tuple_client += (self.deDateFrom.dateTime().toPyDateTime(),)
+        if self.chbDateTo.isChecked():
+            tuple_client += (self.deDateTo.dateTime().toPyDateTime() + timedelta(hours=23,minutes=59),)
+        dbconn = MySQLConnection(**self.dbconfig)
+        cursor = dbconn.cursor()
+        cursor.execute(sql_cl, tuple_client)
+        rows = cursor.fetchall()
+
+        if len(rows):
+            self.twAllExcels.setColumnCount(len(rows[0]))                 # Устанавливаем кол-во колонок
+            self.twAllExcels.setRowCount(len(rows))   # Кол-во строк из таблицы
+            for j, row in enumerate(rows):
+                for k, cell in enumerate(row):
+                    self.twAllExcels.setItem(j, k, QTableWidgetItem(str(cell)))
+
+            # Устанавливаем заголовки таблицы
+            self.twAllExcels.setHorizontalHeaderLabels(cursor.column_names)
+            # Устанавливаем выравнивание на заголовки
+            self.twAllExcels.horizontalHeaderItem(0).setTextAlignment(Qt.AlignCenter)
+            # делаем ресайз колонок по содержимому
+            self.twAllExcels.resizeColumnsToContents()
+            self.table = rows
+            self.table_loaded = True
+            self.file_loaded = False
+        else:
+            self.errMessage('Нет ЗЛ по данному запросу')
+
+    def click_pbPasportCheck(self):
+        if self.leAgent.isEnabled() and not self.agent_touched: # Проверяем достаточность данных
+            self.frAgent.setStyleSheet("QFrame{background-image: url(./x.png)}")
+            return
+        if self.leFond.isEnabled() and not self.fond_touched:
+            self.frFond.setStyleSheet("QFrame{background-image: url(./x.png)}")
+            return
+        if not self.table_loaded:
+            self.frPasport.setStyleSheet("QFrame{background-image: url(./x.png)}")
+            return
+                                                                # Создаем файл с исходными данными и логом
+        wb_log = openpyxl.Workbook(write_only=True)
+
+        ws_log = wb_log.create_sheet('Лог')
+        ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Начинаем'])
+
+        log_name = DIR4PCHECK + datetime.now().strftime('%Y-%m-%d_%H-%M')
+        if self.fond_touched:
+            log_name += 'ф' + str(self.fond_ids[self.cmbFond.currentIndex()])
+        if self.agent_touched:
+            log_name += 'а' + str(self.agent_ids[self.cmbAgent.currentIndex()])
+        log_name += '.xlsx'
+
+        ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Дублируем исходную excel таблицу в этот файл'])
+        ws_input = wb_log.create_sheet('Исходная таблица')
+        for table_row in self.table:
+            row = []
+            for cell in table_row:
+                row.append(cell)
+            ws_input.append(row)
+
+        ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Состояние программы:'])
+        if self.leFond.isEnabled():
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'фонд', self.cmbFond.currentText()])
+        else:
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'фонд', 'не выбран'])
+        if self.leAgent.isEnabled():
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'агент', self.cmbAgent.currentText()])
+        else:
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'агент', 'не выбран'])
+        if self.chbDateFrom.isChecked():
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Выборка ОТ', self.deDateFrom.date().toPyDate()])
+        else:
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Выборка ОТ', 'не выбрана'])
+        if self.chbDateTo.isChecked():
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Выборка ДО', self.deDateTo.date().toPyDate()])
+        else:
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Выборка ДО', 'не выбрана'])
+
+        ws_pasport = wb_log.create_sheet('Проверка паспортов')
+        ws_pasport.append(['ID', 'Серия', 'Номер', 'СНИЛС', 'Фамилия', 'Имя', 'Отчество', 'Проверка паспорта'])  # добавляем первую строку xlsx
+        dbconn = MySQLConnection(**self.dbconfig_pasp)
+        for j, row in enumerate(self.table):                            # Проверяем паспорта из таблицы
+            if j == 0:
+                continue
+            rez = 'OK'
+            read_cursor = dbconn.cursor()
+            read_cursor.execute('SELECT p_seria, p_number FROM passport_greylist WHERE p_seria = %s AND p_number = %s',
+                                (l(row[1]), l(row[2])))
+            row_msg = read_cursor.fetchall()
+            if len(row_msg) > 0:
+                rez = 'плохой'
+            else:
+                rez = 'ОК'
+            ws_pasport.append([row[0], row[1], row[2], row[3], row[4], row[5], row[6], rez])
+#            if int(j / total_rows * 100) > perc_rows:
+#                perc_rows = int(j / total_rows * 100)
+#                print(datetime.datetime.now().strftime("%H:%M:%S") + '  обработано ' + str(perc_rows) + '%')
+
+        wb_log.save(log_name)
+
+    #!!!!!!!!!!!!!!!!!!!!! IMPORT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     def click_pbRefreshImport(self):
         self.refresh()
@@ -976,6 +1201,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         # делаем ресайз колонок по содержимому
         self.twAllExcels.resizeColumnsToContents()
         self.file_loaded = True
+        self.table_loaded = False
 
         for i, row in enumerate(self.sheet.rows):
             table_row = []
@@ -1375,7 +1601,6 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
 #        self.twParsingResult.horizontalHeaderItem(0).setTextAlignment(Qt.AlignCenter)
         # делаем ресайз колонок по содержимому
         self.twParsingResult.resizeColumnsToContents()
-
 
 class WorkerThread(QThread):
     progress_value = QtCore.pyqtSignal(int)
