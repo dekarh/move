@@ -814,14 +814,17 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             self.frMove.show()
             self.frImport.hide()
             self.frPasport.hide()
+            self.twParsingResult.hide()
         elif self.MoveImportPasport == 2:
             self.frImport.show()
             self.frMove.hide()
             self.frPasport.hide()
+            self.twParsingResult.show()
         else:
             self.frPasport.show()
             self.frMove.hide()
             self.frImport.hide()
+            self.twParsingResult.hide()
 
     def click_clbImport(self):
         self.MoveImportPasport = 3
@@ -829,14 +832,17 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             self.frMove.show()
             self.frImport.hide()
             self.frPasport.hide()
+            self.twParsingResult.hide()
         elif self.MoveImportPasport == 2:
             self.frImport.show()
             self.frMove.hide()
             self.frPasport.hide()
+            self.twParsingResult.show()
         else:
             self.frPasport.show()
             self.frMove.hide()
             self.frImport.hide()
+            self.twParsingResult.hide()
 
     def click_clbPasport(self):
         self.MoveImportPasport = 1
@@ -844,14 +850,17 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             self.frMove.show()
             self.frImport.hide()
             self.frPasport.hide()
+            self.twParsingResult.hide()
         elif self.MoveImportPasport == 2:
             self.frImport.show()
             self.frMove.hide()
             self.frPasport.hide()
+            self.twParsingResult.show()
         else:
             self.frPasport.show()
             self.frMove.hide()
             self.frImport.hide()
+            self.twParsingResult.hide()
 
     def load4move(self):
         self.sheet = self.wb[self.wb.sheetnames[self.cmbTab.currentIndex()]]
@@ -1026,12 +1035,11 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         else:
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Выборка ДО', 'не выбрана'])
 
+        self.progressBar.setMaximum(len(self.table)-1)
         ws_pasport = wb_log.create_sheet('Проверка паспортов')
         ws_pasport.append(['ID', 'Серия', 'Номер', 'СНИЛС', 'Фамилия', 'Имя', 'Отчество', 'Проверка паспорта'])  # добавляем первую строку xlsx
         dbconn = MySQLConnection(**self.dbconfig_pasp)
         for j, row in enumerate(self.table):                            # Проверяем паспорта из таблицы
-            if j == 0:
-                continue
             rez = 'OK'
             read_cursor = dbconn.cursor()
             read_cursor.execute('SELECT p_seria, p_number FROM passport_greylist WHERE p_seria = %s AND p_number = %s',
@@ -1042,6 +1050,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             else:
                 rez = 'ОК'
             ws_pasport.append([row[0], row[1], row[2], row[3], row[4], row[5], row[6], rez])
+            self.progressBar.setValue(j)
 #            if int(j / total_rows * 100) > perc_rows:
 #                perc_rows = int(j / total_rows * 100)
 #                print(datetime.datetime.now().strftime("%H:%M:%S") + '  обработано ' + str(perc_rows) + '%')
