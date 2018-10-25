@@ -185,7 +185,9 @@ HOUSE_CUT_NAME = ['дом', 'д']
 CORPUS_CUT_NAME = ['корп', 'корпус']
 APARTMENT_CUT_NAME = ['кв']
 ########################################################################################################################
-# ЗНАЧЕНИЕ В ПОЛЕ "ПОЛ" В ИСХОДНОМ ФАЙЛЕ
+# ЗНАЧЕНИЕ В ПОЛЕ "ПОЛ" ИЗМЕНЯЕМ В ПРОЦЕССЕ
+female_gender_value = 'Ж'
+male_gender_value = 'М'
 ########################################################################################################################
 # ЗАПОЛНЕНИЕ Агент_Ид, Подписант_Ид, Пред_Страховщик_Ид
 #AGENT_ID = '10061'
@@ -296,12 +298,12 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         cursor = dbconn.cursor()
         if self.leAgent.text().strip():
             sql = "SELECT CONCAT_WS(' ', code, '-', user_surname, user_name, user_lastname, '-', position_id), code " \
-                  "FROM saturn_crm.offices_staff WHERE user_fired = 0 AND " \
+                  "FROM offices_staff WHERE user_fired = 0 AND " \
                   "CONCAT_WS(' ', code, '-', user_surname, user_name, user_lastname, user_lastname) LIKE %s"
             cursor.execute(sql, ('%' + self.leAgent.text() + '%',))
         else:
             sql = "SELECT CONCAT_WS(' ', code, '-', user_surname, user_name, user_lastname, '-', position_id), code " \
-                  "FROM saturn_crm.offices_staff WHERE user_fired = 0"
+                  "FROM offices_staff WHERE user_fired = 0"
             cursor.execute(sql)
         rows = cursor.fetchall()
         agents = []
@@ -315,11 +317,11 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         self.cmbAgent.addItems(agents)
         cursor = dbconn.cursor()
         if self.leFond.text().strip():
-            sql = "SELECT CONCAT_WS(' ', id, '-', name), id FROM saturn_crm.subdomains " \
+            sql = "SELECT CONCAT_WS(' ', id, '-', name), id FROM subdomains " \
                   "WHERE CONCAT_WS(' ', id, '-', name) LIKE %s AND id IN (2,6,8,11,12,13)"
             cursor.execute(sql, ('%' + self.leFond.text() + '%',))
         else:
-            sql = "SELECT CONCAT_WS(' ', id, '-', name), id FROM saturn_crm.subdomains WHERE id IN (2,6,8,11,12,13)"
+            sql = "SELECT CONCAT_WS(' ', id, '-', name), id FROM subdomains WHERE id IN (2,6,8,11,12,13)"
             cursor.execute(sql)
         rows = cursor.fetchall()
         fonds = []
@@ -341,24 +343,24 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         if self.leSigner.text().strip():
             if self.fond_touched:
                 sql = "SELECT CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname), id " \
-                      "FROM saturn_crm.signers " \
+                      "FROM signers " \
                       "WHERE CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname) LIKE %s " \
                       "AND subdomain_id = %s"
                 cursor.execute(sql, (self.fond_ids[self.cmbFond.currentIndex()],))
             else:
                 sql = "SELECT CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname), id " \
-                      "FROM saturn_crm.signers " \
+                      "FROM signers " \
                       "WHERE CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname) LIKE %s " \
                       "AND subdomain_id IN (2,6,8,11,12,13) AND subdomain_id IN (" + self.fonds_str + ")"
                 cursor.execute(sql, ('%' + self.leSigner.text() + '%',))
         else:
             if self.fond_touched:
                 sql = "SELECT CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname), id " \
-                      "FROM saturn_crm.signers WHERE subdomain_id = %s"
+                      "FROM signers WHERE subdomain_id = %s"
                 cursor.execute(sql, (self.fond_ids[self.cmbFond.currentIndex()],))
             else:
                 sql = "SELECT CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname), id " \
-                      "FROM saturn_crm.signers WHERE subdomain_id IN (" + self.fonds_str + ") " \
+                      "FROM signers WHERE subdomain_id IN (" + self.fonds_str + ") " \
                       "AND subdomain_id IN (2,6,8,11,12,13)"
                 cursor.execute(sql)
         rows = cursor.fetchall()
@@ -479,7 +481,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             if i == 0:
                 continue
             all_clients_ids += ",'" + client_id + "'"
-        sql = "SELECT cl.client_id FROM saturn_crm.clients AS cl WHERE cl.client_id IN (" + all_clients_ids + \
+        sql = "SELECT cl.client_id FROM clients AS cl WHERE cl.client_id IN (" + all_clients_ids + \
               ") GROUP BY cl.client_id HAVING COUNT(cl.client_id) > 1 ORDER BY cl.client_id DESC"
         dbconn = MySQLConnection(**self.dbconfig)
         cursor = dbconn.cursor()
@@ -488,14 +490,14 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         exit_because_doubles = False
         if len(rows) > 0:
             exit_because_doubles = True
-            ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Дубли в saturn_crm.clients'])
-            ws_clients = wb_log.create_sheet('Дубли в saturn_crm.clients')
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Дубли в clients'])
+            ws_clients = wb_log.create_sheet('Дубли в clients')
             for row in rows:
                 ws_clients.append(row[0])
         else:
-            ws_log.append([datetime.now().strftime("%H:%M:%S"), ' В saturn_crm.clients нет дублей'])
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), ' В clients нет дублей'])
                                                                 # Проверка на дубли contracts
-        sql = "SELECT co.client_id FROM saturn_crm.contracts AS co WHERE co.client_id IN (" + all_clients_ids + \
+        sql = "SELECT co.client_id FROM contracts AS co WHERE co.client_id IN (" + all_clients_ids + \
               ") GROUP BY co.client_id HAVING COUNT(co.client_id) > 1 ORDER BY co.client_id DESC"
         dbconn = MySQLConnection(**self.dbconfig)
         cursor = dbconn.cursor()
@@ -503,12 +505,12 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         rows = cursor.fetchall()
         if len(rows) > 0:
             exit_because_doubles = True
-            ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Дубли в saturn_crm.contracts'])
-            ws_contracts = wb_log.create_sheet('Дубли в saturn_crm.contracts')
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Дубли в contracts'])
+            ws_contracts = wb_log.create_sheet('Дубли в contracts')
             for row in rows:
                 ws_contracts.append(row[0])
         else:
-            ws_log.append([datetime.now().strftime("%H:%M:%S"), ' В saturn_crm.contracts нет дублей'])
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), ' В contracts нет дублей'])
 
                 # Проверка на дубли исходной таблицы
         doubles_in_input = list(set([x for x in self.clients_ids if self.clients_ids.count(x) > 1]))
@@ -536,7 +538,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         ws_backup = wb_log.create_sheet('бэкап БД')
         dbconn = MySQLConnection(**self.dbconfig)
         cursor = dbconn.cursor()
-        sql = "SELECT cl.*, co.* FROM saturn_crm.clients AS cl LEFT JOIN saturn_crm.contracts AS co " \
+        sql = "SELECT cl.*, co.* FROM clients AS cl LEFT JOIN contracts AS co " \
               "ON (cl.client_id = co.client_id) WHERE cl.client_id IN (" + all_clients_ids + ")"
         cursor.execute(sql)
         dbrows = cursor.fetchall()
@@ -591,8 +593,8 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Убрать флаг "Архивный"', 'не выбрано'])
 
         ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Формируем запросы:'])
-        sql_cl = 'UPDATE saturn_crm.clients AS cl SET'
-        sql_co = 'UPDATE saturn_crm.contracts AS co SET'
+        sql_cl = 'UPDATE clients AS cl SET'
+        sql_co = 'UPDATE contracts AS co SET'
         if self.leAgent.isEnabled():
             sql_cl += ' cl.inserted_user_code = %s'
             sql_co += ' co.inserted_code = %s, co.agent_code = %s'
@@ -672,9 +674,9 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             dbconn.commit()
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'update отработал'])
         else:
-            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'saturn_crm.clients - нет запроса'])
-            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'saturn_crm.clients - нет данных'])
-            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'saturn_crm.clients - запрос не исполнен'])
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'clients - нет запроса'])
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'clients - нет данных'])
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'clients - запрос не исполнен'])
         if self.leSQLco.text():
             ws_log.append([datetime.now().strftime("%H:%M:%S"), self.leSQLco.text()])
             ws_log.append([datetime.now().strftime("%H:%M:%S")] + list(tuples_contracts[0]))
@@ -684,9 +686,9 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             dbconn.commit()
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'update отработал'])
         else:
-            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'saturn_crm.contracts - нет запроса'])
-            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'saturn_crm.contracts - нет данных'])
-            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'saturn_crm.contracts - запрос не исполнен'])
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'contracts - нет запроса'])
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'contracts - нет данных'])
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'contracts - запрос не исполнен'])
 
         wb_log.save(log_name)
         q=0
@@ -698,12 +700,12 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         cursor = dbconn.cursor()
         if self.leAgent.text().strip():
             sql = "SELECT CONCAT_WS(' ', code, '-', user_surname, user_name, user_lastname, '-', position_id), code " \
-                  "FROM saturn_crm.offices_staff WHERE user_fired = 0 AND " \
+                  "FROM offices_staff WHERE user_fired = 0 AND " \
                   "CONCAT_WS(' ', code, '-', user_surname, user_name, user_lastname, user_lastname) LIKE %s"
             cursor.execute(sql, ('%' + self.leAgent.text() + '%',))
         else:
             sql = "SELECT CONCAT_WS(' ', code, '-', user_surname, user_name, user_lastname, '-', position_id), code " \
-                  "FROM saturn_crm.offices_staff WHERE user_fired = 0"
+                  "FROM offices_staff WHERE user_fired = 0"
             cursor.execute(sql)
         rows = cursor.fetchall()
         agents = []
@@ -750,24 +752,24 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         if self.leSigner.text().strip():
             if self.fond_touched:
                 sql = "SELECT CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname), id " \
-                      "FROM saturn_crm.signers " \
+                      "FROM signers " \
                       "WHERE CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname) LIKE %s " \
                       "AND subdomain_id = %s"
                 cursor.execute(sql, (self.fond_ids[self.cmbFond.currentIndex()],))
             else:
                 sql = "SELECT CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname), id " \
-                      "FROM saturn_crm.signers " \
+                      "FROM signers " \
                       "WHERE CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname) LIKE %s " \
                       "AND subdomain_id IN (2,6,8,11,12,13) AND subdomain_id IN (" + self.fonds_str + ")"
                 cursor.execute(sql, ('%' + self.leSigner.text() + '%',))
         else:
             if self.fond_touched:
                 sql = "SELECT CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname), id " \
-                      "FROM saturn_crm.signers WHERE subdomain_id = %s"
+                      "FROM signers WHERE subdomain_id = %s"
                 cursor.execute(sql, (self.fond_ids[self.cmbFond.currentIndex()],))
             else:
                 sql = "SELECT CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname), id " \
-                      "FROM saturn_crm.signers WHERE subdomain_id IN (" + self.fonds_str + ") " \
+                      "FROM signers WHERE subdomain_id IN (" + self.fonds_str + ") " \
                       "AND subdomain_id IN (2,6,8,11,12,13)"
                 cursor.execute(sql)
         rows = cursor.fetchall()
@@ -809,24 +811,24 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         if self.leSigner.text().strip():
             if self.fond_touched:
                 sql = "SELECT CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname), id " \
-                      "FROM saturn_crm.signers " \
+                      "FROM signers " \
                       "WHERE CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname) LIKE %s " \
                       "AND subdomain_id = %s"
                 cursor.execute(sql, (self.fond_ids[self.cmbFond.currentIndex()],))
             else:
                 sql = "SELECT CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname), id " \
-                      "FROM saturn_crm.signers " \
+                      "FROM signers " \
                       "WHERE CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname) LIKE %s " \
                       "AND subdomain_id IN (2,6,8,11,12,13) AND subdomain_id IN (" + self.fonds_str + ")"
                 cursor.execute(sql, ('%' + self.leSigner.text() + '%',))
         else:
             if self.fond_touched:
                 sql = "SELECT CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname), id " \
-                      "FROM saturn_crm.signers WHERE subdomain_id = %s"
+                      "FROM signers WHERE subdomain_id = %s"
                 cursor.execute(sql, (self.fond_ids[self.cmbFond.currentIndex()],))
             else:
                 sql = "SELECT CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname), id " \
-                      "FROM saturn_crm.signers WHERE subdomain_id IN (" + self.fonds_str + ") " \
+                      "FROM signers WHERE subdomain_id IN (" + self.fonds_str + ") " \
                       "AND subdomain_id IN (2,6,8,11,12,13)"
                 cursor.execute(sql)
         rows = cursor.fetchall()
@@ -1000,7 +1002,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         self.frPasport.setStyleSheet("QFrame{background-image: }")
                                                                                 # Формируем запрос
         sql_cl = 'SELECT client_id, p_seria, p_number, number, ' \
-                 'p_surname, p_name, p_lastname FROM saturn_crm.clients AS cl WHERE'
+                 'p_surname, p_name, p_lastname FROM clients AS cl WHERE'
         if self.leAgent.isEnabled():
             sql_cl += ' cl.inserted_user_code = %s'
         if self.leFond.isEnabled():
@@ -1035,9 +1037,12 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         if len(rows):
             self.twAllExcels.setColumnCount(len(rows[0]))                 # Устанавливаем кол-во колонок
             self.twAllExcels.setRowCount(len(rows))   # Кол-во строк из таблицы
+            self.clients_ids = []
             for j, row in enumerate(rows):
                 for k, cell in enumerate(row):
                     self.twAllExcels.setItem(j, k, QTableWidgetItem(str(cell)))
+                    if k == 0:
+                        self.clients_ids.append(str(cell))
 
             # Устанавливаем заголовки таблицы
             self.twAllExcels.setHorizontalHeaderLabels(cursor.column_names)
@@ -1100,25 +1105,49 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         else:
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Выборка ДО', 'не выбрана'])
 
+        ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Бэкап исходного состояния БД создан'])
+        all_clients_ids = "'" + self.clients_ids[0] + "'"       # Проверка на дубли clients
+        for i, client_id in enumerate(self.clients_ids):
+            if i == 0:
+                continue
+            all_clients_ids += ",'" + client_id + "'"
+        ws_backup = wb_log.create_sheet('бэкап БД')
+        dbconn = MySQLConnection(**self.dbconfig)
+        cursor = dbconn.cursor()
+        sql = "SELECT cl.*, co.* FROM clients AS cl LEFT JOIN contracts AS co " \
+              "ON (cl.client_id = co.client_id) WHERE cl.client_id IN (" + all_clients_ids + ")"
+        cursor.execute(sql)
+        dbrows = cursor.fetchall()
+        ws_backup.append(cursor.column_names)
+        for dbrow in dbrows:
+            row = []
+            for dbcell in dbrow:
+                row.append(dbcell)
+            ws_backup.append(row)
+
+
         self.progressBar.setMaximum(len(self.table)-1)
         ws_pasport = wb_log.create_sheet('Проверка паспортов')
         ws_pasport.append(['ID', 'Серия', 'Номер', 'СНИЛС', 'Фамилия', 'Имя', 'Отчество', 'Проверка паспорта'])  # добавляем первую строку xlsx
-        dbconn = MySQLConnection(**self.dbconfig_pasp)
+        dbconn_pasp = MySQLConnection(**self.dbconfig_pasp)
+        dbconn_saturn = MySQLConnection(**self.dbconfig)
         for j, row in enumerate(self.table):                            # Проверяем паспорта из таблицы
             rez = 'OK'
-            read_cursor = dbconn.cursor()
+            read_cursor = dbconn_pasp.cursor()
             read_cursor.execute('SELECT p_seria, p_number FROM passport_greylist WHERE p_seria = %s AND p_number = %s',
                                 (l(row[1]), l(row[2])))
             row_msg = read_cursor.fetchall()
             if len(row_msg) > 0:
+                if self.chbSetStatusInSaturn.isChecked():
+                    write_cursor = dbconn_saturn.cursor()
+                    write_cursor.execute('UPDATE contracts AS co SET co.status_secure_code = 6 WHERE co.client_id = %s',
+                                         (row[0],))
                 rez = 'плохой'
             else:
                 rez = 'ОК'
             ws_pasport.append([row[0], row[1], row[2], row[3], row[4], row[5], row[6], rez])
             self.progressBar.setValue(j)
-#            if int(j / total_rows * 100) > perc_rows:
-#                perc_rows = int(j / total_rows * 100)
-#                print(datetime.datetime.now().strftime("%H:%M:%S") + '  обработано ' + str(perc_rows) + '%')
+        dbconn_saturn.commit()
 
         wb_log.save(log_name)
 
@@ -1556,7 +1585,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                     continue
                 elif label0 in SNILS_LABEL:
                     if GENERATE_SNILS:
-                        dbconfig = read_config(filename='NormXLS.ini', section='main_mysql')
+                        dbconfig = read_config(filename='move.ini', section='mysql')
                         dbconn = MySQLConnection(**dbconfig)
                         count_snils = 1
                         cached_snils = 0
@@ -1698,10 +1727,10 @@ class WorkerThread(QThread):
         self.agent_id = agent
         self.signer_id = signer
         if GENERATE_SNILS:
-            dbconfig = read_config(filename='NormXLS.ini', section='main_mysql')
+            dbconfig = read_config(filename='move.ini', section='mysql')
             dbconn = MySQLConnection(**dbconfig)
             dbcursor = dbconn.cursor()
-            dbcursor.execute('SELECT min(`number`) FROM  saturn_crm.clients WHERE `number` > 99000000000 and subdomain_id = 2;')
+            dbcursor.execute('SELECT min(`number`) FROM  clients WHERE `number` > 99000000000 and subdomain_id = 2;')
             dbrows = dbcursor.fetchall()
             dbconn.close()
             self.start_snils = int('{0:011d}'.format(dbrows[0][0])[:-2])  # 9 цифр неправильного СНИЛСа с которого уменьшаем
@@ -1947,7 +1976,7 @@ class WorkerThread(QThread):
                     continue
                 elif label0 in SNILS_LABEL:
                     if GENERATE_SNILS:
-                        dbconfig = read_config(filename='NormXLS.ini', section='main_mysql')
+                        dbconfig = read_config(filename='move.ini', section='mysql')
                         dbconn = MySQLConnection(**dbconfig)
                         count_snils = 1
                         cached_snils = 0
