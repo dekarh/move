@@ -1605,7 +1605,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                         addr = field2sernum(row_item)
                         lab = [PASSPORT_DATA_LABELS[0], PASSPORT_DATA_LABELS[1]]
                         for j in range(len(addr)):
-                            result_row[lab[j]] = str(addr[j])
+                            result_row[lab[j]] = addr[j]
 
                 elif label0 == '-------------------------':
                     continue
@@ -1637,15 +1637,15 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                     result_row[label0] = row_item
                 elif label0 in PASSPORT_DATA_LABELS:
                     if PASSPORT_DATA_LABELS.index(label0) == 0:
-                        result_row[label0] = s(l(row_item))
+                        result_row[label0] = normalize_seria(row_item)
                     elif PASSPORT_DATA_LABELS.index(label0) == 1:
-                        result_row[label0] = s(l(row_item))
+                        result_row[label0] = normalize_index(row_item)
                     elif PASSPORT_DATA_LABELS.index(label0) == 2:
                         result_row[label0] = normalize_date(row_item)
                     elif PASSPORT_DATA_LABELS.index(label0) == 3:
                         result_row[label0] = normalize_text(row_item)
                     elif PASSPORT_DATA_LABELS.index(label0) == 4:
-                        result_row[label0] = s(l(row_item))
+                        result_row[label0] = normalize_index(row_item)
 
                 elif label0 in PHONES_LABELS:
                     if PHONES_LABELS.index(label0) == 0:
@@ -2033,15 +2033,15 @@ class WorkerThread(QThread):
                     result_row[label0] = row_item
                 elif label0 in PASSPORT_DATA_LABELS:
                     if PASSPORT_DATA_LABELS.index(label0) == 0:
-                        result_row[label0] = s(l(row_item))
+                        result_row[label0] = normalize_seria(row_item)
                     elif PASSPORT_DATA_LABELS.index(label0) == 1:
-                        result_row[label0] = s(l(row_item))
+                        result_row[label0] = normalize_index(row_item)
                     elif PASSPORT_DATA_LABELS.index(label0) == 2:
                         result_row[label0] = normalize_date(row_item)
                     elif PASSPORT_DATA_LABELS.index(label0) == 3:
                         result_row[label0] = normalize_text(row_item)
                     elif PASSPORT_DATA_LABELS.index(label0) == 4:
-                        result_row[label0] = s(l(row_item))
+                        result_row[label0] = normalize_index(row_item)
 
                 elif label0 in PHONES_LABELS:
                     if PHONES_LABELS.index(label0) == 0:
@@ -2590,18 +2590,18 @@ def intl(a):               # белиберду в цифры или 0
         return 0
 
 def field2sernum(field):
-    seria = 1111
-    number = 111111
-    if len(field) > 0 and field != NULL_VALUE:
-        new_field = ''
-        for ch in field:          # убираем точки и запятые
-            if ch == '.' or ch == ',':
-                ch = ''
-            new_field = new_field + ch
-        if len(new_field.strip().split(' ')) > 1:
-            seria = l(new_field.strip().split(' ')[0])
-            number = l(new_field.strip().split(' ')[1])
-        elif len(new_field.strip().split(' ')):
-            seria = l(new_field.strip())
-    return seria, number
+    if len(field) > 0 and field != NULL_VALUE and l(field) > 999999 and len('{0:010d}'.format(l(field))) == 10:
+        new_field = '{0:010d}'.format(l(field))
+        seria = new_field[:4]
+        number = new_field[4:]
+        return seria, number
+    else:
+        return '1111', '111111'
+
+def normalize_seria(field):
+    if len(field) > 0 and field != NULL_VALUE and l(field) > 0 and len('{0:04d}'.format(l(field))) == 4:
+        return '{0:04d}'.format(l(field))
+    else:
+        return '1111'
+
 
