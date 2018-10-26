@@ -233,9 +233,9 @@ GENERATE_SNILS = False
 
 ########################################################################################################################
 
-IN_IDS = ['ID','ИД_Клиента','client_id','id']
-IN_SNILS = ['СНИЛС', 'Страховой_номер', 'number']
-IN_NAMES = ['ID', 'СНИЛС', 'Страховой_номер', 'number', 'Фамилия', 'Имя', 'Отчество', 'ФИО']
+IN_IDS = ['ID','ИД_КЛИЕНТА','CLIENT_ID']
+IN_SNILS = ['СНИЛС', 'СТРАХОВОЙ_НОМЕР', 'СТРАХОВОЙ НОМЕР', 'NUMBER']
+IN_NAMES = ['ID', 'СНИЛС', 'СТРАХОВОЙ_НОМЕР', 'СТРАХОВОЙ НОМЕР', 'NUMBER', 'ФАМИЛИЯ', 'ИМЯ', 'ОТЧЕСТВО', 'ФИО']
 
 DIR4MOVE = '/home/da3/Move/'
 DIR4IMPORT = '/home/da3/CheckLoad/'
@@ -939,7 +939,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         for j, row in enumerate(self.sheet.rows):
             if j == 0:
                 for k, cell in enumerate(row):  # Проверяем, чтобы был СНИЛС
-                    if cell.value in IN_IDS:
+                    if str(cell.value).capitalize() in IN_IDS:
                         keys[IN_IDS[0]] = k
                 if len(keys) > 0:
                     for k, cell in enumerate(row):
@@ -949,7 +949,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                             if cell.value != None:
                                 if str(cell.value).strip() != '':
                                     last_cell = k
-                                    if cell.value == name:
+                                    if str(cell.value).capitalize() == name:
                                         keys[name] = k
 
                 else:
@@ -1257,7 +1257,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         for j, row in enumerate(self.sheet.rows):
             if j == 0:
                 for k, cell in enumerate(row):  # Проверяем, чтобы был СНИЛС
-                    if cell.value in IN_SNILS:
+                    if str(cell.value).capitalize() in IN_SNILS:
                         keys[IN_SNILS[0]] = k
                 if len(keys) > 0:
                     for k, cell in enumerate(row):
@@ -1267,7 +1267,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                             if cell.value != None:
                                 if str(cell.value).strip() != '':
                                     last_cell = k
-                                    if cell.value == name:
+                                    if str(cell.value).capitalize() == name:
                                         keys[name] = k
 
                 else:
