@@ -28,6 +28,7 @@ class MainWindow(MainWindowSlots):
         self.pbAgent.clicked.connect(self.click_pbAgent)
         self.pbFond.clicked.connect(self.click_pbFond)
         self.pbSigner.clicked.connect(self.click_pbSigner)
+        self.pbSaveCfgFile.clicked.connect(self.click_pbSaveCfgFile)
         self.cmbAgent.activated[str].connect(self.set_cmbAgent)
         self.cmbFond.activated[str].connect(self.set_cmbFond)
         self.cmbSigner.activated[str].connect(self.set_cmbSigner)

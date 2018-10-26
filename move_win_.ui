@@ -1354,7 +1354,32 @@
           <number>9</number>
          </property>
          <item>
-          <widget class="QComboBox" name="cmbCfgFile"/>
+          <widget class="QFrame" name="frame_2">
+           <property name="frameShape">
+            <enum>QFrame::StyledPanel</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Raised</enum>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_15">
+            <item>
+             <widget class="QComboBox" name="cmbCfgFile"/>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pbSaveCfgFile">
+              <property name="maximumSize">
+               <size>
+                <width>170</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Сохранить в образцы</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
          </item>
          <item>
           <widget class="QTableWidget" name="tableWidget">

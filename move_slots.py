@@ -54,7 +54,8 @@ MANIPULATE_LABELS = ["-------------------------"
                      , "Регион регистрации из номера"
                      , "-------------------------"
                      , "Регион проживания из номера"
-#                     , "-------------------------"
+                     , "-------------------------"
+                     , "Cерия и Номер паспорта из поля"
 #                     , "Пол_получить_из_ФИО"
 #                     , "Пол_подставить_свои_значения"
                      ]
@@ -203,7 +204,7 @@ FULL_ADRESS_LABELS = ['Индекс', 'Регион', 'Тип_региона', '
 
 PASSPORT_LABELS = ['Серия', 'Номер', 'Дата_выдачи', 'Кем_выдан', 'Код_подразделения']
 
-FIO_LABELS = ['Фамилия', 'Имя', 'Отчество']
+FIO_KEY_LABELS = ['Фамилия', 'Имя', 'Отчество']
 
 BIRTH_PLACE_LABELS = ['Страна', 'Область', 'Район', 'Город']
 ########################################################################################################################
@@ -939,7 +940,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         for j, row in enumerate(self.sheet.rows):
             if j == 0:
                 for k, cell in enumerate(row):  # Проверяем, чтобы был СНИЛС
-                    if str(cell.value).capitalize() in IN_IDS:
+                    if str(cell.value).upper() in IN_IDS:
                         keys[IN_IDS[0]] = k
                 if len(keys) > 0:
                     for k, cell in enumerate(row):
@@ -949,7 +950,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                             if cell.value != None:
                                 if str(cell.value).strip() != '':
                                     last_cell = k
-                                    if str(cell.value).capitalize() == name:
+                                    if str(cell.value).upper() == name:
                                         keys[name] = k
 
                 else:
@@ -1153,6 +1154,25 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
 
     #!!!!!!!!!!!!!!!!!!!!! IMPORT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+    def click_pbSaveCfgFile(self):
+        wb_cfg = openpyxl.Workbook(write_only=True)
+        ws_cfg = wb_cfg.create_sheet('Конфиг')
+        for i in range(self.tableWidget.rowCount()):
+            ws_cfg.append([self.tableWidget.cellWidget(i,0).currentIndex(), self.tableWidget.cellWidget(i,1).currentIndex()])
+        if self.file_loaded:
+            wb_cfg.save(DIR4CFGIMPORT + self.cmbFile.currentText() + '.xlsx')
+        rows = os.listdir(DIR4CFGIMPORT)                        # обновляем список конфигов
+        cfg_files = []
+        for row in rows:
+            if row.find('.xlsx') > -1:
+                cfg_files.append(row)
+        self.cfg_file_names = {}
+        for i, cfg_file in enumerate(cfg_files):
+            self.cfg_file_names[cfg_file] = i
+        self.cmbCfgFile.clear()
+        self.cmbCfgFile.addItems(cfg_files)
+
+
     def click_pbRefreshImport(self):
         self.refresh()
         self.load4import()
@@ -1257,7 +1277,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         for j, row in enumerate(self.sheet.rows):
             if j == 0:
                 for k, cell in enumerate(row):  # Проверяем, чтобы был СНИЛС
-                    if str(cell.value).capitalize() in IN_SNILS:
+                    if str(cell.value).upper() in IN_SNILS:
                         keys[IN_SNILS[0]] = k
                 if len(keys) > 0:
                     for k, cell in enumerate(row):
@@ -1267,7 +1287,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                             if cell.value != None:
                                 if str(cell.value).strip() != '':
                                     last_cell = k
-                                    if str(cell.value).capitalize() == name:
+                                    if str(cell.value).upper() == name:
                                         keys[name] = k
 
                 else:
@@ -1380,8 +1400,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             ws_input_doubles = wb_log.create_sheet('Дубли в СНИЛС в исходной таблице')
             ws_input_doubles.append(['ID'])
             for row in doubles_in_input:
-                ws_input_doubles.append(s(row))
-
+                ws_input_doubles.append([normalize_snils(row)])
         ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Состояние программы:'])
         ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Исходный файл ', self.file_name])
         ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Конфигурационный файл ', self.cmbCfgFile.currentText()])
@@ -1581,6 +1600,13 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
 
+                    # Серия и номер паспорта из поля
+                    elif label0 == MANIPULATE_LABELS[25]:
+                        addr = field2sernum(row_item)
+                        lab = [PASSPORT_DATA_LABELS[0], PASSPORT_DATA_LABELS[1]]
+                        for j in range(len(addr)):
+                            result_row[lab[j]] = str(addr[j])
+
                 elif label0 == '-------------------------':
                     continue
                 elif label0 in SNILS_LABEL:
@@ -1611,15 +1637,15 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                     result_row[label0] = row_item
                 elif label0 in PASSPORT_DATA_LABELS:
                     if PASSPORT_DATA_LABELS.index(label0) == 0:
-                        passport.seriya = row_item
+                        result_row[label0] = s(l(row_item))
                     elif PASSPORT_DATA_LABELS.index(label0) == 1:
-                        passport.nomer = row_item
+                        result_row[label0] = s(l(row_item))
                     elif PASSPORT_DATA_LABELS.index(label0) == 2:
-                        passport.date = row_item
+                        result_row[label0] = normalize_date(row_item)
                     elif PASSPORT_DATA_LABELS.index(label0) == 3:
-                        passport.who = normalize_text(row_item)
+                        result_row[label0] = normalize_text(row_item)
                     elif PASSPORT_DATA_LABELS.index(label0) == 4:
-                        passport.cod = row_item
+                        result_row[label0] = s(l(row_item))
 
                 elif label0 in PHONES_LABELS:
                     if PHONES_LABELS.index(label0) == 0:
@@ -1652,8 +1678,8 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                 else:
                     result_row[label0] = normalize_text(row_item)
 
-            for num, z in enumerate(passport.get_values()):
-                result_row[PASSPORT_DATA_LABELS[num]] = z
+#            for num, z in enumerate(passport.get_values()):
+#                result_row[PASSPORT_DATA_LABELS[num]] = z
             for num, z in enumerate(phone.get_values()):
                 result_row[PHONES_LABELS[num]] = z
 
@@ -1661,9 +1687,9 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                       PLACE_BIRTH_LABELS, PASSPORT_DATA_LABELS, ADRESS_REG_LABELS, ADRESS_LIVE_LABELS,
                       PHONES_LABELS, TECH_LABELS]
             mass = []
-            for l in LABELS:
-                for ll in l:
-                    mass.append(ll)
+            for label_group in LABELS:
+                for label in label_group:
+                    mass.append(label)
             yum = True
             yum_phone0 = -1
             yum_phone1 = -1
@@ -1700,7 +1726,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
 
             if yum and err_from_log.get(num_row + 1) == None:
                 for ind, cell in enumerate(mass):
-                    self.twParsingResult.setItem(maxParsingResult, ind, QTableWidgetItem(cell))
+                    self.twParsingResult.setItem(maxParsingResult, ind, QTableWidgetItem(str(cell)))
                 maxParsingResult += 1
                 #ws.append(mass)
                 #print(num_row, result_row['ФИО.Фамилия'], result_row['ФИО.Имя'], result_row['ФИО.Отчество'])
@@ -1971,6 +1997,12 @@ class WorkerThread(QThread):
                         lab = [ADRESS_LIVE_LABELS[1], ADRESS_LIVE_LABELS[2]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
+# Серия и номер паспорта из поля
+                    elif label0 == MANIPULATE_LABELS[25]:
+                        addr = field2sernum(row_item)
+                        lab = [PASSPORT_DATA_LABELS[0],PASSPORT_DATA_LABELS[1]]
+                        for j in range(len(addr)):
+                            result_row[lab[j]] = addr[j]
 
                 elif label0 == '-------------------------':
                     continue
@@ -2001,15 +2033,15 @@ class WorkerThread(QThread):
                     result_row[label0] = row_item
                 elif label0 in PASSPORT_DATA_LABELS:
                     if PASSPORT_DATA_LABELS.index(label0) == 0:
-                        passport.seriya = row_item
+                        result_row[label0] = s(l(row_item))
                     elif PASSPORT_DATA_LABELS.index(label0) == 1:
-                        passport.nomer = row_item
+                        result_row[label0] = s(l(row_item))
                     elif PASSPORT_DATA_LABELS.index(label0) == 2:
-                        passport.date = row_item
+                        result_row[label0] = normalize_date(row_item)
                     elif PASSPORT_DATA_LABELS.index(label0) == 3:
-                        passport.who = normalize_text(row_item)
+                        result_row[label0] = normalize_text(row_item)
                     elif PASSPORT_DATA_LABELS.index(label0) == 4:
-                        passport.cod = row_item
+                        result_row[label0] = s(l(row_item))
 
                 elif label0 in PHONES_LABELS:
                     if PHONES_LABELS.index(label0) == 0:
@@ -2042,8 +2074,8 @@ class WorkerThread(QThread):
                 else:
                     result_row[label0] = normalize_text(row_item)
 
-            for num, z in enumerate(passport.get_values()):
-                result_row[PASSPORT_DATA_LABELS[num]] = z
+#            for num, z in enumerate(passport.get_values()):
+#                result_row[PASSPORT_DATA_LABELS[num]] = z
             for num, z in enumerate(phone.get_values()):
                 result_row[PHONES_LABELS[num]] = z
 
@@ -2051,9 +2083,9 @@ class WorkerThread(QThread):
                       PLACE_BIRTH_LABELS, PASSPORT_DATA_LABELS, ADRESS_REG_LABELS, ADRESS_LIVE_LABELS,
                       PHONES_LABELS, TECH_LABELS]
             mass = []
-            for l in LABELS:
-                for ll in l:
-                    mass.append(ll)
+            for label_group in LABELS:
+                for label in label_group:
+                    mass.append(label)
             yum = True
             yum_phone0 = -1
             yum_phone1 = -1
@@ -2194,10 +2226,10 @@ def field2addr(field):
         TYPES = [REG_TYPES, DISTRICT_TYPES, CITY_TYPES, NP_TYPES, STREET_TYPES]
         for i, word in enumerate(field):
             addr_type_vrem = ''
-            for l in TYPES:
-                for ll in l:
-                    if word.lower() == ll.lower():
-                        addr_type_vrem = ll
+            for label_group in TYPES:
+                for label in label_group:
+                    if word.lower() == label.lower():
+                        addr_type_vrem = label
             if addr_type_vrem == '':
                 addr_name = addr_name + ' ' + word
             else:
@@ -2556,3 +2588,20 @@ def intl(a):               # белиберду в цифры или 0
         return 0
     except TypeError:
         return 0
+
+def field2sernum(field):
+    seria = 1111
+    number = 111111
+    if len(field) > 0 and field != NULL_VALUE:
+        new_field = ''
+        for ch in field:          # убираем точки и запятые
+            if ch == '.' or ch == ',':
+                ch = ''
+            new_field = new_field + ch
+        if len(new_field.strip().split(' ')) > 1:
+            seria = l(new_field.strip().split(' ')[0])
+            number = l(new_field.strip().split(' ')[1])
+        elif len(new_field.strip().split(' ')):
+            seria = l(new_field.strip())
+    return seria, number
+
