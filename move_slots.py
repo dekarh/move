@@ -1441,8 +1441,6 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
 
     def previewImport(self):
         err_from_log = {}
-        i10l = 0
-        i10 = 0
         self.twParsingResult.setColumnCount(0)
         self.twParsingResult.setRowCount(0)
         self.twParsingResult.setColumnCount(len(HEAD_RESULT_EXCEL_FILE))
@@ -1821,8 +1819,6 @@ class WorkerThread(QThread):
         wb_err = Workbook(write_only=True)
         ws_err = wb_err.create_sheet('Ошибки')
         ws_err.append(HEAD_RESULT_EXCEL_FILE)                                         # добавляем первую строку xlsx
-        i10l = 0
-        i10 = 0
         wb = Workbook(write_only=True)
         ws = wb.create_sheet('Лист1')
         ws.append(HEAD_RESULT_EXCEL_FILE)                                             # добавляем первую строку xlsx
@@ -1839,18 +1835,12 @@ class WorkerThread(QThread):
         #        ws.append(head_result_file)                                             # добавляем первую строку xlsx
         # --------------------------------------- Заменил первую строку xls файла ---------------------------------------
 
+        file_number = 1
         for num_row, row in enumerate(self.sheet.rows):
             self.progress_value.emit(num_row + 1)  # отрисовываем ProgresBar
             if num_row == 0:
                 continue
-            i10 = int(num_row / 10005)
-#--------------------------------------- С этим if не добавляло первую строку ----------------------------------
-#            if num_row == 0:
-#                continue
-#--------------------------------------- С этим if не добавляло первую строку ----------------------------------
-
             result_row = {}
-
             passport = Passport()
             phone = Phone()
 
@@ -2137,23 +2127,23 @@ class WorkerThread(QThread):
                 mass.append(err_from_log.get(num_row + 1))
                 ws_err.append(mass)
 #                print(num_row, result_row['ФИО.Фамилия'], result_row['ФИО.Имя'], result_row['ФИО.Отчество'])
-
-            if i10 > i10l:                                  # режем по 10000
-                i10l = i10
-                f = self.fname.replace(self.fname.split('/')[-1], '{0:02d}'.format(i10) + '_' + self.fname.split('/')[-1])
+            if num_row % 10000 == 0:                # режем по 10000
+                f = self.fname.replace(self.fname.split('/')[-1], '{0:02d}'.format(file_number) + '_' +
+                                       self.fname.split('/')[-1])
                 wb.save(f)
                 wb = Workbook(write_only=True)
                 ws = wb.create_sheet('Лист1')
                 ws.append(HEAD_RESULT_EXCEL_FILE)  # добавляем первую строку xlsx
+                file_number += 1
 
-        f = self.fname.replace(self.fname.split('/')[-1], '{0:02d}'.format(i10+1) + '_'+ self.fname.split('/')[-1])
+        f = self.fname.replace(self.fname.split('/')[-1], '{0:02d}'.format(file_number) + '_'+ self.fname.split('/')[-1])
         wb.save(f)
-        f = self.fname.replace(self.fname.split('/')[-1], 'err'.format(i10+1) + self.fname.split('/')[-1])
+        f = self.fname.replace(self.fname.split('/')[-1], 'err'.format(file_number) + self.fname.split('/')[-1])
         wb_err.save(f)
         if use_log:
             log_file.close()
         if GENERATE_SNILS:
-            self.wb_comp.save(self.fname.replace(self.fname.split('/')[-1], 'com'.format(i10+1)
+            self.wb_comp.save(self.fname.replace(self.fname.split('/')[-1], 'com'.format(file_number)
                                                  + self.fname.split('/')[-1]))
 
 
