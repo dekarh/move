@@ -189,6 +189,7 @@ APARTMENT_CUT_NAME = ['кв']
 # ЗНАЧЕНИЕ В ПОЛЕ "ПОЛ" ИЗМЕНЯЕМ В ПРОЦЕССЕ
 female_gender_value = 'Ж'
 male_gender_value = 'М'
+gender_length = 1
 ########################################################################################################################
 # ЗАПОЛНЕНИЕ Агент_Ид, Подписант_Ид, Пред_Страховщик_Ид
 #AGENT_ID = '10061'
@@ -1368,12 +1369,15 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         if self.cmbGenderType == 0:
             female_gender_value = 'Ж'
             male_gender_value = 'М'
+            gender_length = 1
         elif self.cmbGenderType == 1:
-            female_gender_value = 'Жен.'
-            male_gender_value = 'Муж.'
+            female_gender_value = 'Ж'
+            male_gender_value = 'М'
+            gender_length = 1
         else:
-            female_gender_value = 'Женский'
-            male_gender_value = 'Мужской'
+            female_gender_value = 'Ж'
+            male_gender_value = 'М'
+            gender_length = 1
 
             # Создаем директорию
         if datetime.now().strftime("%Y-%m-%d") not in os.listdir(DIR4IMPORT):
@@ -2284,10 +2288,11 @@ def normalize_gender(gender):
     gender = str(gender).strip()
     if gender =='':
         return NEW_NULL_VALUE_FOR_GENDER
-    elif len(gender) > 1 and (gender.strip()!=female_gender_value and gender.strip()!=male_gender_value):
+    elif len(gender) > 1 and (gender.strip().upper()[:gender_length] != female_gender_value and
+                              gender.strip().upper()[:gender_length] != male_gender_value):
         return NEW_NULL_VALUE_FOR_GENDER
     else:
-        if gender.strip() == female_gender_value:
+        if gender.strip().upper()[:gender_length] == female_gender_value:
             return '1'
         else:
             return '0'
