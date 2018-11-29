@@ -320,10 +320,10 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         cursor = dbconn.cursor()
         if self.leFond.text().strip():
             sql = "SELECT CONCAT_WS(' ', id, '-', name), id FROM subdomains " \
-                  "WHERE CONCAT_WS(' ', id, '-', name) LIKE %s AND id IN (2,6,8,11,12,13)"
+                  "WHERE CONCAT_WS(' ', id, '-', name) LIKE %s AND id IN (2,6,8,11,12,13,14)"
             cursor.execute(sql, ('%' + self.leFond.text() + '%',))
         else:
-            sql = "SELECT CONCAT_WS(' ', id, '-', name), id FROM subdomains WHERE id IN (2,6,8,11,12,13)"
+            sql = "SELECT CONCAT_WS(' ', id, '-', name), id FROM subdomains WHERE id IN (2,6,8,11,12,13,14)"
             cursor.execute(sql)
         rows = cursor.fetchall()
         fonds = []
@@ -353,7 +353,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                 sql = "SELECT CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname), id " \
                       "FROM signers " \
                       "WHERE CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname) LIKE %s " \
-                      "AND subdomain_id IN (2,6,8,11,12,13) AND subdomain_id IN (" + self.fonds_str + ")"
+                      "AND subdomain_id IN (2,6,8,11,12,13,14) AND subdomain_id IN (" + self.fonds_str + ")"
                 cursor.execute(sql, ('%' + self.leSigner.text() + '%',))
         else:
             if self.fond_touched:
@@ -363,7 +363,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             else:
                 sql = "SELECT CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname), id " \
                       "FROM signers WHERE subdomain_id IN (" + self.fonds_str + ") " \
-                      "AND subdomain_id IN (2,6,8,11,12,13)"
+                      "AND subdomain_id IN (2,6,8,11,12,13,14)"
                 cursor.execute(sql)
         rows = cursor.fetchall()
         self.signer_ids = []
@@ -762,7 +762,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                 sql = "SELECT CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname), id " \
                       "FROM signers " \
                       "WHERE CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname) LIKE %s " \
-                      "AND subdomain_id IN (2,6,8,11,12,13) AND subdomain_id IN (" + self.fonds_str + ")"
+                      "AND subdomain_id IN (2,6,8,11,12,13,14) AND subdomain_id IN (" + self.fonds_str + ")"
                 cursor.execute(sql, ('%' + self.leSigner.text() + '%',))
         else:
             if self.fond_touched:
@@ -772,7 +772,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             else:
                 sql = "SELECT CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname), id " \
                       "FROM signers WHERE subdomain_id IN (" + self.fonds_str + ") " \
-                      "AND subdomain_id IN (2,6,8,11,12,13)"
+                      "AND subdomain_id IN (2,6,8,11,12,13,14)"
                 cursor.execute(sql)
         rows = cursor.fetchall()
         self.signer_ids = []
@@ -821,7 +821,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                 sql = "SELECT CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname), id " \
                       "FROM signers " \
                       "WHERE CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname) LIKE %s " \
-                      "AND subdomain_id IN (2,6,8,11,12,13) AND subdomain_id IN (" + self.fonds_str + ")"
+                      "AND subdomain_id IN (2,6,8,11,12,13,14) AND subdomain_id IN (" + self.fonds_str + ")"
                 cursor.execute(sql, ('%' + self.leSigner.text() + '%',))
         else:
             if self.fond_touched:
@@ -831,7 +831,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             else:
                 sql = "SELECT CONCAT_WS(' ', id, '-', signer_surname, signer_name, signer_lastname), id " \
                       "FROM signers WHERE subdomain_id IN (" + self.fonds_str + ") " \
-                      "AND subdomain_id IN (2,6,8,11,12,13)"
+                      "AND subdomain_id IN (2,6,8,11,12,13,14)"
                 cursor.execute(sql)
         rows = cursor.fetchall()
         self.signer_ids = []
