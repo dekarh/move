@@ -5,6 +5,7 @@ import os
 import sys
 import re
 import string
+import bz2
 from string import digits
 from random import random
 from dateutil.parser import parse
@@ -1127,7 +1128,103 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                 row.append(dbcell)
             ws_backup.append(row)
 
+        p = Popen(['ls', '-l', '--time-style=long-iso', 'list_of_expired_passports.csv.bz2'], stdout=PIPE)
+        out, err = p.communicate()
+        has_passports = False
+        if p.returncode == 0:
+            if datetime.now() - timedelta(days=2) < datetime.strptime(out.decode('utf-8').split(' ')[5] +
+                                                    ' ' + out.decode('utf-8').split(' ')[6], '%Y-%m-%d %H:%M'):
+                has_passports = True
 
+        if not has_passports:
+            try:
+                os.remove('list_of_expired_passports.csv.bz2')
+            except:
+                q = 0
+            try:
+                os.remove('list_of_expired_passports.csv')
+            except:
+                q = 0
+
+            i = 0                                   # Если база паспортов с ГУМВД устаревшая - скачиваем
+            ok = 1
+            while ok != 0 and i < 10:
+                p = Popen(['wget', '-q', '-c', '-t5',
+                           'https://guvm.mvd.ru/upload/expired-passports/list_of_expired_passports.csv.bz2'], stdout=PIPE)
+                out, err = p.communicate()
+                ok = p.returncode
+                i += 1
+            if i >= 10:
+                print(datetime.now().strftime("%d.%m.%Y %H:%M:%S"), ' Не скачивается, наверное погода нелетная :)')
+                return
+
+            all_files = os.listdir(path=".")        # Распаковываем все bzip2 в директории
+            for i, all_file in enumerate(all_files):
+                if all_file.endswith(".bz2"):
+                    with open(all_file.replace('.bz2', ''), 'wb') as new_file, bz2.BZ2File(all_file, 'rb') as file:
+                        for data in iter(lambda: file.read(100 * 1024), b''):
+                            new_file.write(data)
+
+        has_files = False                       # Проверяем есть ли .csv
+        all_files = os.listdir(path=".")
+        for all_file in all_files:
+            if all_file.endswith(".csv"):
+                has_files = True
+                new_csv = all_file
+        if not has_files:
+            print(datetime.now().strftime("%H:%M:%S"), ' В скачанном архиве нет .csv')
+            try:
+                os.remove('list_of_expired_passports.csv.bz2')
+            except:
+                q = 0
+                return
+
+#        self.progressBar.setMaximum(118000000)
+        passports = []
+        with open("list_of_expired_passports.csv","rt") as file_passports:
+            for i,line in enumerate(file_passports):
+                if i:
+#                    self.progressBar.setValue(i)
+                    passports.append(l(line))
+
+        self.progressBar.setMaximum(len(self.table)-1)
+        ws_pasport = wb_log.create_sheet('Проверка паспортов')
+        ws_pasport.append(['ID', 'Серия', 'Номер', 'СНИЛС', 'Фамилия', 'Имя', 'Отчество', 'Проверка паспорта'])  # добавляем первую строку xlsx
+        dbconn_saturn = MySQLConnection(**self.dbconfig)
+        bad_passport_ids = []
+        for j, row in enumerate(self.table):                            # Проверяем паспорта из таблицы
+            rez = 'OK'
+            try:
+                q = passports.index(l(row[1])*1000000 + l(row[2]))
+                rez = 'плохой'
+                if self.chbSetStatusInSaturn.isChecked():
+                    bad_passport_ids.append((row[0],))
+            except ValueError:
+                rez = 'OK'
+#            for passport in passports:
+#                if l(row[1]) == l(passport)// 1000000 and l(row[2]) == l(passport)  % 1000000:
+#                    rez = 'плохой'
+#                    if self.chbSetStatusInSaturn.isChecked():
+#                        bad_passport_ids.append((row[0],))
+#                    break
+            ws_pasport.append([row[0], row[1], row[2], row[3], row[4], row[5], row[6], rez])
+            if j%100:
+                self.progressBar.setValue(j)
+            if len(bad_passport_ids) and not len(bad_passport_ids)%1000:
+                write_cursor = dbconn_saturn.cursor()
+                write_cursor.executemany('UPDATE contracts AS co SET co.status_secure_code = 6 WHERE co.client_id = %s',
+                                         bad_passport_ids)
+                dbconn_saturn.commit()
+                bad_passport_ids = []
+        if len(bad_passport_ids):
+            write_cursor = dbconn_saturn.cursor()
+            write_cursor.executemany('UPDATE contracts AS co SET co.status_secure_code = 6 WHERE co.client_id = %s',
+                                     bad_passport_ids)
+            dbconn_saturn.commit()
+
+
+
+        qq = """
         self.progressBar.setMaximum(len(self.table)-1)
         ws_pasport = wb_log.create_sheet('Проверка паспортов')
         ws_pasport.append(['ID', 'Серия', 'Номер', 'СНИЛС', 'Фамилия', 'Имя', 'Отчество', 'Проверка паспорта'])  # добавляем первую строку xlsx
@@ -1150,6 +1247,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             ws_pasport.append([row[0], row[1], row[2], row[3], row[4], row[5], row[6], rez])
             self.progressBar.setValue(j)
         dbconn_saturn.commit()
+        """
 
         wb_log.save(log_name)
 
