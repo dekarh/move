@@ -249,6 +249,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
 
     def setupUi(self, form):
         Ui_Form.setupUi(self,form)
+        self.passports = []
         self.tableWidget.setColumnCount(2)
         self.tableWidget.setHorizontalHeaderLabels(('Результат', 'Исходник'))
         for j in range(self.tableWidget.columnCount()):
@@ -1132,7 +1133,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         out, err = p.communicate()
         has_passports = False
         if p.returncode == 0:
-            if datetime.now() - timedelta(days=2) < datetime.strptime(out.decode('utf-8').split(' ')[5] +
+            if datetime.now() - timedelta(days=3) < datetime.strptime(out.decode('utf-8').split(' ')[5] +
                                                     ' ' + out.decode('utf-8').split(' ')[6], '%Y-%m-%d %H:%M'):
                 has_passports = True
 
@@ -1179,13 +1180,14 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                 q = 0
                 return
 
-#        self.progressBar.setMaximum(118000000)
-        passports = []
-        with open("list_of_expired_passports.csv","rt") as file_passports:
-            for i,line in enumerate(file_passports):
-                if i:
-#                    self.progressBar.setValue(i)
-                    passports.append(l(line))
+        if not len(self.passports):
+            self.progressBar.setMaximum(118000000)
+            with open("list_of_expired_passports.csv","rt") as file_passports:
+                for i,line in enumerate(file_passports):
+                    if i:
+                        if not i%1000000:
+                            self.progressBar.setValue(i)
+                        self.passports.append(l(line))
 
         self.progressBar.setMaximum(len(self.table)-1)
         ws_pasport = wb_log.create_sheet('Проверка паспортов')
@@ -1195,20 +1197,20 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         for j, row in enumerate(self.table):                            # Проверяем паспорта из таблицы
             rez = 'OK'
             try:
-                q = passports.index(l(row[1])*1000000 + l(row[2]))
+                q = self.passports.index(l(row[1])*1000000 + l(row[2]))
                 rez = 'плохой'
                 if self.chbSetStatusInSaturn.isChecked():
                     bad_passport_ids.append((row[0],))
             except ValueError:
                 rez = 'OK'
-#            for passport in passports:
+#            for passport in self.passports:
 #                if l(row[1]) == l(passport)// 1000000 and l(row[2]) == l(passport)  % 1000000:
 #                    rez = 'плохой'
 #                    if self.chbSetStatusInSaturn.isChecked():
 #                        bad_passport_ids.append((row[0],))
 #                    break
             ws_pasport.append([row[0], row[1], row[2], row[3], row[4], row[5], row[6], rez])
-            if j%100:
+            if not j%100:
                 self.progressBar.setValue(j)
             if len(bad_passport_ids) and not len(bad_passport_ids)%1000:
                 write_cursor = dbconn_saturn.cursor()
