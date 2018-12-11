@@ -249,7 +249,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
 
     def setupUi(self, form):
         Ui_Form.setupUi(self,form)
-        self.passports = []
+        self.passports = {}
         self.tableWidget.setColumnCount(2)
         self.tableWidget.setHorizontalHeaderLabels(('Результат', 'Исходник'))
         for j in range(self.tableWidget.columnCount()):
@@ -1083,13 +1083,13 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             log_name += 'а' + str(self.agent_ids[self.cmbAgent.currentIndex()])
         log_name += '.xlsx'
 
-        ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Дублируем исходную excel таблицу в этот файл'])
-        ws_input = wb_log.create_sheet('Исходная таблица')
-        for table_row in self.table:
-            row = []
-            for cell in table_row:
-                row.append(cell)
-            ws_input.append(row)
+        #ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Дублируем исходную excel таблицу в этот файл'])
+        #ws_input = wb_log.create_sheet('Исходная таблица')
+        #for table_row in self.table:
+        #    row = []
+        #    for cell in table_row:
+        #        row.append(cell)
+        #    ws_input.append(row)
 
         ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Состояние программы:'])
         if self.leFond.isEnabled():
@@ -1109,30 +1109,30 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         else:
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Выборка ДО', 'не выбрана'])
 
-        ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Бэкап исходного состояния БД создан'])
-        all_clients_ids = "'" + self.clients_ids[0] + "'"       # Проверка на дубли clients
-        for i, client_id in enumerate(self.clients_ids):
-            if i == 0:
-                continue
-            all_clients_ids += ",'" + client_id + "'"
-        ws_backup = wb_log.create_sheet('бэкап БД')
-        dbconn = MySQLConnection(**self.dbconfig)
-        cursor = dbconn.cursor()
-        sql = "SELECT cl.*, co.* FROM clients AS cl LEFT JOIN contracts AS co " \
-              "ON (cl.client_id = co.client_id) WHERE cl.client_id IN (" + all_clients_ids + ")"
-        cursor.execute(sql)
-        dbrows = cursor.fetchall()
-        ws_backup.append(cursor.column_names)
-        for dbrow in dbrows:
-            row = []
-            for dbcell in dbrow:
-                row.append(dbcell)
-            ws_backup.append(row)
+        #ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Бэкап исходного состояния БД создан'])
+        #all_clients_ids = "'" + self.clients_ids[0] + "'"       # Проверка на дубли clients
+        #for i, client_id in enumerate(self.clients_ids):
+        #    if i == 0:
+        #        continue
+        #    all_clients_ids += ",'" + client_id + "'"
+        #ws_backup = wb_log.create_sheet('бэкап БД')
+        #dbconn = MySQLConnection(**self.dbconfig)
+        #cursor = dbconn.cursor()
+        #sql = "SELECT cl.*, co.* FROM clients AS cl LEFT JOIN contracts AS co " \
+        #      "ON (cl.client_id = co.client_id) WHERE cl.client_id IN (" + all_clients_ids + ")"
+        #cursor.execute(sql)
+        #dbrows = cursor.fetchall()
+        #ws_backup.append(cursor.column_names)
+        #for dbrow in dbrows:
+        #    row = []
+        #    for dbcell in dbrow:
+        #        row.append(dbcell)
+        #    ws_backup.append(row)
 
         p = Popen(['ls', '-l', '--time-style=long-iso', 'list_of_expired_passports.csv.bz2'], stdout=PIPE)
         out, err = p.communicate()
         has_passports = False
-        if p.returncode == 0:
+        if not p.returncode and out:
             if datetime.now() - timedelta(days=3) < datetime.strptime(out.decode('utf-8').split(' ')[5] +
                                                     ' ' + out.decode('utf-8').split(' ')[6], '%Y-%m-%d %H:%M'):
                 has_passports = True
@@ -1187,7 +1187,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                     if i:
                         if not i%1000000:
                             self.progressBar.setValue(i)
-                        self.passports.append(l(line))
+                        self.passports[l(line)] = 1
 
         self.progressBar.setMaximum(len(self.table)-1)
         ws_pasport = wb_log.create_sheet('Проверка паспортов')
@@ -1195,14 +1195,30 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         dbconn_saturn = MySQLConnection(**self.dbconfig)
         bad_passport_ids = []
         for j, row in enumerate(self.table):                            # Проверяем паспорта из таблицы
-            rez = 'OK'
+            check = l(row[1])*1000000 + l(row[2])
             try:
-                q = self.passports.index(l(row[1])*1000000 + l(row[2]))
+                q = self.passports[check]
                 rez = 'плохой'
                 if self.chbSetStatusInSaturn.isChecked():
                     bad_passport_ids.append((row[0],))
-            except ValueError:
+            except KeyError:
                 rez = 'OK'
+
+#            if check in self.passports:
+#                rez = 'плохой'
+#                if self.chbSetStatusInSaturn.isChecked():
+#                    bad_passport_ids.append((row[0],))
+#            else:
+#                rez = 'OK'
+#--------------------------------------------------------------------------
+#            try:
+#                q = self.passports.index(l(row[1])*1000000 + l(row[2]))
+#                rez = 'плохой'
+#                if self.chbSetStatusInSaturn.isChecked():
+#                    bad_passport_ids.append((row[0],))
+#            except ValueError:
+#                rez = 'OK'
+#---------------------------------------------------------------------------
 #            for passport in self.passports:
 #                if l(row[1]) == l(passport)// 1000000 and l(row[2]) == l(passport)  % 1000000:
 #                    rez = 'плохой'
@@ -1223,6 +1239,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             write_cursor.executemany('UPDATE contracts AS co SET co.status_secure_code = 6 WHERE co.client_id = %s',
                                      bad_passport_ids)
             dbconn_saturn.commit()
+        self.progressBar.setValue(0)
 
 
 
