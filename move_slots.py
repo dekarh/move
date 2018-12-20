@@ -2423,20 +2423,23 @@ def normalize_text(tx):
 
 def normalize_date(date):
     date = str(date)
-    result = re.findall(r'\b(\d{4}|\d{2})[\.:-](\d{2})[\.:-](\d{4}|\d{2})\b', date)
-    if len(result) > 0:
-        if result[0] == NULL_VALUE:
+    try:
+        result = re.findall(r'\b(\d{4}|\d{2})[\.:-](\d{2})[\.:-](\d{4}|\d{2})\b', date)
+        if len(result) > 0:
+            if result[0] == NULL_VALUE:
+                return NEW_NULL_VALUE_FOR_DATE
+            if len(result[0][0]) == 4:
+                result[0] = result[0][::-1]
+            elif len(result[0][2]) == 2:
+                if result[0][2] < 20:
+                    result[0][2] = '20' + result[0][2]
+                elif result[0][2] > 20:
+                    result[0][2] = '19' + result[0][2]
+            return '.'.join(result[0])
+        else:
             return NEW_NULL_VALUE_FOR_DATE
-        if len(result[0][0]) == 4:
-            result[0] = result[0][::-1]
-        elif len(result[0][2]) == 2:
-            if result[0][2] < 20:
-                result[0][2] = '20' + result[0][2]
-            elif result[0][2] > 20:
-                result[0][2] = '19' + result[0][2]
-        return '.'.join(result[0])
-    else:
-        return NEW_NULL_VALUE_FOR_DATE
+    except Exception as ee:
+        return  NEW_NULL_VALUE_FOR_DATE
 
 
 # print(normalize_date('01.09.2003'))
