@@ -237,7 +237,7 @@ GENERATE_SNILS = False
 ########################################################################################################################
 
 IN_IDS = ['ID','ИД_КЛИЕНТА','CLIENT_ID']
-IN_SNILS = ['СНИЛС', 'СТРАХОВОЙ_НОМЕР', 'СТРАХОВОЙ НОМЕР', 'NUMBER']
+IN_SNILS = ['СНИЛС', 'СТРАХОВОЙ_НОМЕР', 'СТРАХОВОЙ НОМЕР', 'NUMBER','СТРАХОВОЙНОМЕР']
 IN_NAMES = ['ID', 'СНИЛС', 'СТРАХОВОЙ_НОМЕР', 'СТРАХОВОЙ НОМЕР', 'NUMBER', 'ФАМИЛИЯ', 'ИМЯ', 'ОТЧЕСТВО', 'ФИО']
 
 DIR4MOVE = '/home/da3/Move/'
@@ -1395,7 +1395,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         for j, row in enumerate(self.sheet.rows):
             if j == 0:
                 for k, cell in enumerate(row):  # Проверяем, чтобы был СНИЛС
-                    if str(cell.value).upper() in IN_SNILS:
+                    if str(cell.value).strip().upper() in IN_SNILS:
                         keys[IN_SNILS[0]] = k
                 if len(keys) > 0:
                     for k, cell in enumerate(row):
