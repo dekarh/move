@@ -378,7 +378,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         self.cmbSigner.clear()
         self.cmbSigner.addItems(signers)
 
-        rows = os.listdir(DIR4CFGIMPORT)                        # список конфигов
+        rows = sorted(os.listdir(DIR4CFGIMPORT))                        # список конфигов
         cfg_files = []
         for row in rows:
             if row.find('.xlsx') > -1:
@@ -390,7 +390,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         self.cmbCfgFile.addItems(cfg_files)
 
         try:                                                    # список файлов загрузки
-            files = os.listdir(path=self.leDir.text())
+            files = sorted(os.listdir(path=self.leDir.text()))
             for i, file in enumerate(files):
                 self.file_names[file] = i
             self.cmbFile.clear()
@@ -849,7 +849,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
 
     def change_leDir(self):
         try:
-            files = os.listdir(path=self.leDir.text())
+            files = sorted(os.listdir(path=self.leDir.text()))
         except OSError:
             return
         self.cmbFile.clear()
@@ -1279,7 +1279,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             ws_cfg.append([self.tableWidget.cellWidget(i,0).currentIndex(), self.tableWidget.cellWidget(i,1).currentIndex()])
         if self.file_loaded:
             wb_cfg.save(DIR4CFGIMPORT + self.cmbFile.currentText() + '.xlsx')
-        rows = os.listdir(DIR4CFGIMPORT)                        # обновляем список конфигов
+        rows = sorted(os.listdir(DIR4CFGIMPORT))                        # обновляем список конфигов
         cfg_files = []
         for row in rows:
             if row.find('.xlsx') > -1:
