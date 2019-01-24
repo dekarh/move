@@ -32,33 +32,35 @@ from move_win import Ui_Form
 from lib import read_config, l, s, fine_phone, format_phone
 
 MANIPULATE_LABELS = ["-------------------------"
-                     , "ФИО из поля"
-                     , "-------------------------"
-                     , "ФИО при рождении из поля"
-                     , "-------------------------"
-                     , "Регистрация -> Регион"
-                     , "Регистрация -> Район"
-                     , "Регистрация -> Город"
-                     , "Регистрация -> Населенный_пункт"
-                     , "Регистрация -> Улица"
-                     , "-------------------------"
-                     , "Проживание -> Регион"
-                     , "Проживание -> Район"
-                     , "Проживание -> Город"
-                     , "Проживание -> Населенный_пункт"
-                     , "Проживание -> Улица"
-                     , "-------------------------"
-                     , "Адрес регистрации из_поля"
-                     , "-------------------------"
-                     , "Адрес проживания из поля"
-                     , "-------------------------"
-                     , "Регион регистрации из номера"
-                     , "-------------------------"
-                     , "Регион проживания из номера"
-                     , "-------------------------"
-                     , "Cерия и Номер паспорта из поля"
-#                     , "Пол_получить_из_ФИО"
-#                     , "Пол_подставить_свои_значения"
+                    , "ФИО из поля"
+                    , "-------------------------"
+                    , "ФИО при рождении из поля"
+                    , "-------------------------"
+                    , "Регистрация -> Регион"
+                    , "Регистрация -> Район"
+                    , "Регистрация -> Город"
+                    , "Регистрация -> Населенный_пункт"
+                    , "Регистрация -> Улица"
+                    , "-------------------------"
+                    , "Проживание -> Регион"
+                    , "Проживание -> Район"
+                    , "Проживание -> Город"
+                    , "Проживание -> Населенный_пункт"
+                    , "Проживание -> Улица"
+                    , "-------------------------"
+                    , "Адрес регистрации из_поля"
+                    , "-------------------------"
+                    , "Адрес проживания из поля"
+                    , "-------------------------"
+                    , "Регион регистрации из номера"
+                    , "-------------------------"
+                    , "Регион проживания из номера"
+                    , "-------------------------"
+                    , "Cерия и Номер паспорта из поля"
+                    , "-------------------------"
+                    , "Генератор некорректных СНИЛС"
+                    #, "Пол_получить_из_ФИО"
+                    #, "Пол_подставить_свои_значения"
                      ]
 
 SNILS_LABEL = ["СНИЛС"]
@@ -95,15 +97,12 @@ PHONES_LABELS = ["Телефон.Мобильный", "Телефон.Родст
 
 TECH_LABELS = ["Агент_Ид", "Подписант_Ид", "Пред_Страховщик_Ид"]
 
-#------------------------Отключил MANIPULATE_LABELS------------------------------------------------------------
-# FIELDS_IN_RESULT_TABLE_COMPLETE = [SNILS_LABEL, FIO_LABELS, FIO_BIRTH_LABELS, GENDER_LABEL, DATE_BIRTH_LABEL,
-#                                   PLACE_BIRTH_LABELS, PASSPORT_DATA_LABELS, ADRESS_REG_LABELS, ADRESS_LIVE_LABELS,
-#                                   PHONES_LABELS, MANIPULATE_LABELS]
-#------------------------Отключил MANIPULATE_LABELS------------------------------------------------------------
-
-FIELDS_IN_RESULT_TABLE_COMPLETE = [SNILS_LABEL, FIO_LABELS, FIO_BIRTH_LABELS, FIO_SNILS_LABELS, GENDER_LABEL,
+FIELDS_IN_RESULT_TABLE_FULL = [SNILS_LABEL, FIO_LABELS, FIO_BIRTH_LABELS, FIO_SNILS_LABELS, GENDER_LABEL,
                                    DATE_BIRTH_LABEL, PLACE_BIRTH_LABELS, PASSPORT_DATA_LABELS, ADRESS_REG_LABELS,
                                    ADRESS_LIVE_LABELS, PHONES_LABELS, TECH_LABELS, MANIPULATE_LABELS]
+FIELDS_IN_RESULT_TABLE_SHORT = [SNILS_LABEL, FIO_LABELS, FIO_BIRTH_LABELS, FIO_SNILS_LABELS, GENDER_LABEL,
+                                   DATE_BIRTH_LABEL, PLACE_BIRTH_LABELS, PASSPORT_DATA_LABELS, ADRESS_REG_LABELS,
+                                   ADRESS_LIVE_LABELS, PHONES_LABELS, TECH_LABELS]
 
 HEAD_RESULT_EXCEL_FILE = ['СНИЛС',
                           'Фамилия', 'Имя', 'Отчество',
@@ -282,7 +281,28 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         self.twParsingResult.hide()
         self.cmbGenderType.addItems(['М или Ж', 'Муж. или Жен.', 'Мужской или Женский'])
         self.refresh()
+        dbconfig = read_config(filename='move.ini', section='mysql')
+        dbconn = MySQLConnection(**dbconfig)
+        dbcursor = dbconn.cursor()
+        dbcursor.execute('SELECT min(`number`) FROM  clients WHERE `number` > 99900000000;')
+        dbrows = dbcursor.fetchall()
+        dbconn.close()
+        self.start_snils = int('{0:011d}'.format(dbrows[0][0])[:-2])    # 9 цифр неправильного СНИЛСа с которого уменьшаем
+        self.start_snils_cs = int('{0:011d}'.format(dbrows[0][0])[-2:]) # контрольная сумма неправильного СНИЛСа
         return
+
+    def checksum(self, snils_dig):  # Вычисляем 2 последних цифры СНИЛС по первым 9-ти
+        def snils_csum(sn):
+            k = range(9, 0, -1)
+            pairs = zip(k, [int(x) for x in sn.replace('-', '').replace(' ', '')])
+            return sum([k * v for k, v in pairs])
+        snils = '{0:09d}'.format(snils_dig)
+        csum = snils_csum(snils)
+        while csum > 101:
+            csum %= 101
+        if csum in (100, 101):
+            csum = 0
+        return csum
 
     def refresh(self):
         if self.fond_touched:                                   # Запомнили позиции combobox'ов
@@ -1339,7 +1359,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             else:
                 self.cfg_file_loaded = True
 
-            for i in FIELDS_IN_RESULT_TABLE_COMPLETE:
+            for i in FIELDS_IN_RESULT_TABLE_SHORT:
                 for name in i:
                     mass.append(name)
 
@@ -1366,7 +1386,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
 
                 self.combobox_table_result = QComboBox()
                 # self.combobox_table_result.setMaxVisibleItems(15)
-                for row in FIELDS_IN_RESULT_TABLE_COMPLETE:
+                for row in FIELDS_IN_RESULT_TABLE_FULL:
                     for name in row:
                         self.combobox_table_result.addItem(name)
                 items.append(self.combobox_table_result)
@@ -1392,12 +1412,18 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
 
         keys = {}
         last_cell = 0
+        has_gen_snils = False
+        for num_item in range(self.tableWidget.rowCount()):
+            if self.tableWidget.cellWidget(num_item, 0).currentText() == 'Генератор некорректных СНИЛС':
+                has_gen_snils = True
         for j, row in enumerate(self.sheet.rows):
             if j == 0:
                 for k, cell in enumerate(row):  # Проверяем, чтобы был СНИЛС
                     if str(cell.value).strip().upper() in IN_SNILS:
                         keys[IN_SNILS[0]] = k
-                if len(keys) > 0:
+                if has_gen_snils:
+                    q=0
+                elif len(keys) > 0:
                     for k, cell in enumerate(row):
                         for n, name in enumerate(IN_NAMES):
                             if n == 0:
@@ -1407,7 +1433,6 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                                     last_cell = k
                                     if str(cell.value).upper() == name:
                                         keys[name] = k
-
                 else:
                     self.errMessage('В файле ' + self.cmbFile.currentText() + ' на вкладке ' + self.cmbTab.currentText() +
                                     ' отсутствует колонка со СНИЛС')
@@ -1595,11 +1620,11 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
 
                 if label0 in MANIPULATE_LABELS:
 
-                    if label0 in [MANIPULATE_LABELS[1], MANIPULATE_LABELS[3]]:
+                    if label0 in ["ФИО из поля", "ФИО при рождении из поля"]:
                         FIO = field2fio(row_item)
-                        if label0 == MANIPULATE_LABELS[1]:
+                        if label0 == "ФИО из поля":
                             lab = FIO_LABELS
-                        elif label0 == MANIPULATE_LABELS[3]:
+                        elif label0 == "ФИО при рождении из поля":
                             lab = FIO_BIRTH_LABELS
                         if row_item == '':
                             for j in range(len(lab)):
@@ -1608,79 +1633,58 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                             for j in range(len(FIO)):
                                 result_row[lab[j]] = FIO[j]
                         continue
-
-                    # ------------------------------------------------------- Убрал класс Gender --------------------------------------
-                    #                    elif label0 == "Пол_получить_из_ФИО":
-                    #                        gender = Gender(row_item)
-                    #                        result_row[GENDER_LABEL[0]] = gender.get_value()
-
-                    #                    elif label0 == "Пол_подставить_свои_значения":
-                    #                        gender = Gender(FIO[2], gender_field_exists=True, gender=row_item) ## !!!!!!!!!!!!!!
-                    #                        result_row[GENDER_LABEL[0]] = gender.get_value()
-                    # ------------------------------------------------------- Убрал класс Gender --------------------------------------
-                    # Регистрация -> Регион
-                    elif label0 == MANIPULATE_LABELS[5]:
+                    elif label0 == "Регистрация -> Регион":
                         addr = field2addr(row_item)
                         lab = [ADRESS_REG_LABELS[1], ADRESS_REG_LABELS[2]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
-                    # Регистрация -> Район
-                    elif label0 == MANIPULATE_LABELS[6]:
+                    elif label0 == "Регистрация -> Район":
                         addr = field2addr(row_item)
                         lab = [ADRESS_REG_LABELS[3], ADRESS_REG_LABELS[4]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
-                    # Регистрация -> Город
-                    elif label0 == MANIPULATE_LABELS[7]:
+                    elif label0 == "Регистрация -> Город":
                         addr = field2addr(row_item)
                         lab = [ADRESS_REG_LABELS[5], ADRESS_REG_LABELS[6]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
-                    # Регистрация -> Населенный_пункт
-                    elif label0 == MANIPULATE_LABELS[8]:
+                    elif label0 == "Регистрация -> Населенный_пункт":
                         addr = field2addr(row_item)
                         lab = [ADRESS_REG_LABELS[7], ADRESS_REG_LABELS[8]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
-                    # Регистрация -> Улица
-                    elif label0 == MANIPULATE_LABELS[9]:
+                    elif label0 == "Регистрация -> Улица":
                         addr = field2addr(row_item)
                         lab = [ADRESS_REG_LABELS[9], ADRESS_REG_LABELS[10]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
                     # ADRESS_LIVE_LABELS
-                    # Проживание -> Регион
-                    elif label0 == MANIPULATE_LABELS[11]:
+                    elif label0 == "Проживание -> Регион":
                         addr = field2addr(row_item)
                         lab = [ADRESS_LIVE_LABELS[1], ADRESS_LIVE_LABELS[2]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
-                    # Проживание -> Район
-                    elif label0 == MANIPULATE_LABELS[12]:
+                    elif label0 == "Проживание -> Район":
                         addr = field2addr(row_item)
                         lab = [ADRESS_LIVE_LABELS[3], ADRESS_LIVE_LABELS[4]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
-                    # Проживание -> Город
-                    elif label0 == MANIPULATE_LABELS[13]:
+                    elif label0 == "Проживание -> Город":
                         addr = field2addr(row_item)
                         lab = [ADRESS_LIVE_LABELS[5], ADRESS_LIVE_LABELS[6]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
-                    # Проживание -> Населенный_пункт
-                    elif label0 == MANIPULATE_LABELS[14]:
+                    elif label0 == "Проживание -> Населенный_пункт":
                         addr = field2addr(row_item)
                         lab = [ADRESS_LIVE_LABELS[7], ADRESS_LIVE_LABELS[8]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
-                    # Проживание -> Улица
-                    elif label0 == MANIPULATE_LABELS[15]:
+                    elif label0 == "Проживание -> Улица":
                         addr = field2addr(row_item)
                         lab = [ADRESS_LIVE_LABELS[9], ADRESS_LIVE_LABELS[10]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
-                    # Адрес регистрации из_поля
-                    elif label0 == MANIPULATE_LABELS[17]:
+                    elif label0 == "Адрес регистрации из_поля":
                         result_row[ADRESS_REG_LABELS[0]] = '111111'
                         adress_reg = FullAdress(row_item)
                         #                        qr = ''
@@ -1692,8 +1696,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                         if len(n) != 6:
                             result_row[ADRESS_REG_LABELS[0]] = '111111'
 
-                    # Адрес проживания из поля
-                    elif label0 == MANIPULATE_LABELS[19]:
+                    elif label0 == "Адрес проживания из поля":
                         result_row[ADRESS_LIVE_LABELS[0]] = '111111'
                         adress_zhit = FullAdress(row_item)
                         #                        qr = ''
@@ -1705,26 +1708,47 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                         if len(n) != 6:
                             result_row[ADRESS_LIVE_LABELS[0]] = '111111'
 
-                    # Регион регистрации из номера
-                    elif label0 == MANIPULATE_LABELS[21]:
+                    elif label0 == "Регион регистрации из номера":
                         addr = field2addr(REGIONS[intl(row_item)])
                         lab = [ADRESS_REG_LABELS[1], ADRESS_REG_LABELS[2]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
 
-                    # Регион проживания из номера
-                    elif label0 == MANIPULATE_LABELS[23]:
+                    elif label0 == "Регион проживания из номера":
                         addr = field2addr(REGIONS[intl(row_item)])
                         lab = [ADRESS_LIVE_LABELS[1], ADRESS_LIVE_LABELS[2]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
 
-                    # Серия и номер паспорта из поля
-                    elif label0 == MANIPULATE_LABELS[25]:
+                    elif label0 == "Cерия и Номер паспорта из поля":
                         addr = field2sernum(row_item)
                         lab = [PASSPORT_DATA_LABELS[0], PASSPORT_DATA_LABELS[1]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
+
+                    elif label0 == "Генератор некорректных СНИЛС":
+                        dbconfig = read_config(filename='move.ini', section='mysql')
+                        dbconn = MySQLConnection(**dbconfig)
+                        count_snils = 1
+                        cached_snils = 0
+                        while count_snils > 0:
+                            checksum_snils = self.checksum(self.start_snils)
+                            for i in range(self.start_snils_cs + 1, 99):
+                                if i != checksum_snils:
+                                    full_snils = self.start_snils * 100 + i
+                                    dbcursor = dbconn.cursor()
+                                    dbcursor.execute('SELECT `number` FROM clients WHERE `number` = %s', (full_snils,))
+                                    dbchk = dbcursor.fetchall()
+                                    if len(dbchk) == 0:
+                                        cached_snils = full_snils
+                                        count_snils -= 1
+                                        self.start_snils_cs = i
+                                        break
+                            if count_snils > 0:
+                                self.start_snils -= 1
+                                self.start_snils_cs = 0
+                        dbconn.close()
+                        result_row[SNILS_LABEL[0]] = normalize_snils(cached_snils)
 
                 elif label0 == '-------------------------':
                     continue
@@ -1735,21 +1759,23 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                         count_snils = 1
                         cached_snils = 0
                         while count_snils > 0:
-                            self.start_snils -= 1
                             checksum_snils = self.checksum(self.start_snils)
-                            for i in range(0, 99):
+                            for i in range(self.start_snils_cs + 1, 99):
                                 if i != checksum_snils:
                                     full_snils = self.start_snils * 100 + i
                                     dbcursor = dbconn.cursor()
-                                    dbcursor.execute('SELECT `number` FROM clients WHERE `number` = %s',
-                                                     (full_snils,))
+                                    dbcursor.execute('SELECT `number` FROM clients WHERE `number` = %s', (full_snils,))
                                     dbchk = dbcursor.fetchall()
                                     if len(dbchk) == 0:
                                         cached_snils = full_snils
                                         count_snils -= 1
+                                        self.start_snils_cs = i
+                                        break
+                            if count_snils > 0:
+                                self.start_snils -= 1
+                                self.start_snils_cs = 0
                         dbconn.close()
                         result_row[label0] = normalize_snils(cached_snils)
-                        self.ws_comp.append([row_item, cached_snils])
                     else:
                         result_row[label0] = normalize_snils(row_item)
                 elif label0 in PLACE_BIRTH_LABELS:
@@ -1871,19 +1897,18 @@ class WorkerThread(QThread):
         self.fname = fname
         self.agent_id = agent
         self.signer_id = signer
+        dbconfig = read_config(filename='move.ini', section='mysql')
+        dbconn = MySQLConnection(**dbconfig)
+        dbcursor = dbconn.cursor()
+        dbcursor.execute('SELECT min(`number`) FROM  clients WHERE `number` > 99900000000;')
+        dbrows = dbcursor.fetchall()
+        dbconn.close()
+        self.start_snils = int('{0:011d}'.format(dbrows[0][0])[:-2])  # 9 цифр неправильного СНИЛСа с которого уменьшаем
+        self.start_snils_cs = int('{0:011d}'.format(dbrows[0][0])[-2:])  # контрольная сумма неправильного СНИЛСа
         if GENERATE_SNILS:
-            dbconfig = read_config(filename='move.ini', section='mysql')
-            dbconn = MySQLConnection(**dbconfig)
-            dbcursor = dbconn.cursor()
-            dbcursor.execute('SELECT min(`number`) FROM  clients WHERE `number` > 99000000000 and subdomain_id = 2;')
-            dbrows = dbcursor.fetchall()
-            dbconn.close()
-            self.start_snils = int('{0:011d}'.format(dbrows[0][0])[:-2])  # 9 цифр неправильного СНИЛСа с которого уменьшаем
             self.wb_comp = Workbook(write_only=True)
             self.ws_comp = self.wb_comp.create_sheet('Лист1')
             self.ws_comp.append(['Реальный СНИЛС', 'Псевдо-СНИЛС'])  # добавляем первую строку xlsx
-        else:
-            self.start_snils = 0
 
     def checksum(self, snils_dig):  # Вычисляем 2 последних цифры СНИЛС по первым 9-ти
         def snils_csum(sn):
@@ -1944,18 +1969,6 @@ class WorkerThread(QThread):
         ws = wb.create_sheet('Лист1')
         ws.append(HEAD_RESULT_EXCEL_FILE)                                             # добавляем первую строку xlsx
 
-        # --------------------------------------- Заменил первую строку xls файла---------------------------------------
-        #        result_file_columns = [SNILS_LABEL, FIO_LABELS, FIO_BIRTH_LABELS, GENDER_LABEL, DATE_BIRTH_LABEL,
-        #                            PLACE_BIRTH_LABELS, PASSPORT_DATA_LABELS, ADRESS_REG_LABELS, ADRESS_LIVE_LABELS,
-        #                            PHONES_LABELS]
-
-        #        listmerge = lambda result_file_columns: [col for label in result_file_columns for col in label] # заполняем первую строку xlsx
-        #        head_result_file = listmerge(result_file_columns)
-
-
-        #        ws.append(head_result_file)                                             # добавляем первую строку xlsx
-        # --------------------------------------- Заменил первую строку xls файла ---------------------------------------
-
         file_number = 1
         for num_row, row in enumerate(self.sheet.rows):
             self.progress_value.emit(num_row + 1)  # отрисовываем ProgresBar
@@ -1971,7 +1984,7 @@ class WorkerThread(QThread):
                 label0 = self.tableWidget.cellWidget(num_item, 0).currentText()
                 label1 = self.tableWidget.cellWidget(num_item, 1).currentText()
 
-                row_item = str(row[item1].value)                         #Если преобразовывать все в стринг, то только тут
+                row_item = str(row[item1].value)                     # Если преобразовывать все в стринг, то только тут
                 if row_item == 'None' or row_item == '2001-01-00' or row_item == '2001-01-00 00:00:00' \
                                       or  row_item == 'null' or  row_item == 'NULL' \
                                       or  row_item == '\\N' or  row_item == '\\n' \
@@ -1985,11 +1998,11 @@ class WorkerThread(QThread):
 
                 if label0 in MANIPULATE_LABELS:
 
-                    if label0 in [MANIPULATE_LABELS[1], MANIPULATE_LABELS[3]]:
+                    if label0 in ["ФИО из поля", "ФИО при рождении из поля"]:
                         FIO = field2fio(row_item)
-                        if label0 == MANIPULATE_LABELS[1]:
+                        if label0 == "ФИО из поля":
                             lab = FIO_LABELS
-                        elif label0 == MANIPULATE_LABELS[3]:
+                        elif label0 == "ФИО при рождении из поля":
                             lab = FIO_BIRTH_LABELS
                         if row_item == '':
                             for j in range(len(lab)):
@@ -1999,78 +2012,59 @@ class WorkerThread(QThread):
                                 result_row[lab[j]] = FIO[j]
                         continue
 
-#------------------------------------------------------- Убрал класс Gender --------------------------------------
-#                    elif label0 == "Пол_получить_из_ФИО":
-#                        gender = Gender(row_item)
-#                        result_row[GENDER_LABEL[0]] = gender.get_value()
-
-#                    elif label0 == "Пол_подставить_свои_значения":
-#                        gender = Gender(FIO[2], gender_field_exists=True, gender=row_item) ## !!!!!!!!!!!!!!
-#                        result_row[GENDER_LABEL[0]] = gender.get_value()
-#------------------------------------------------------- Убрал класс Gender --------------------------------------
-# Регистрация -> Регион
-                    elif label0 == MANIPULATE_LABELS[5]:
+                    elif label0 == "Регистрация -> Регион":
                         addr = field2addr(row_item)
                         lab = [ADRESS_REG_LABELS[1], ADRESS_REG_LABELS[2]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
-# Регистрация -> Район
-                    elif label0 == MANIPULATE_LABELS[6]:
+                    elif label0 == "Регистрация -> Район":
                         addr = field2addr(row_item)
                         lab = [ADRESS_REG_LABELS[3], ADRESS_REG_LABELS[4]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
-# Регистрация -> Город
-                    elif label0 == MANIPULATE_LABELS[7]:
+                    elif label0 == "Регистрация -> Город":
                         addr = field2addr(row_item)
                         lab = [ADRESS_REG_LABELS[5], ADRESS_REG_LABELS[6]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
-# Регистрация -> Населенный_пункт
-                    elif label0 == MANIPULATE_LABELS[8]:
+                    elif label0 == "Регистрация -> Населенный_пункт":
                         addr = field2addr(row_item)
                         lab = [ADRESS_REG_LABELS[7], ADRESS_REG_LABELS[8]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
-# Регистрация -> Улица
-                    elif label0 == MANIPULATE_LABELS[9]:
+                    elif label0 == "Регистрация -> Улица":
                         addr = field2addr(row_item)
                         lab = [ADRESS_REG_LABELS[9], ADRESS_REG_LABELS[10]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
 # ADRESS_LIVE_LABELS
-# Проживание -> Регион
-                    elif label0 == MANIPULATE_LABELS[11]:
+                    elif label0 == "Проживание -> Регион":
                         addr = field2addr(row_item)
                         lab = [ADRESS_LIVE_LABELS[1], ADRESS_LIVE_LABELS[2]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
-# Проживание -> Район
-                    elif label0 == MANIPULATE_LABELS[12]:
+                    elif label0 == "Проживание -> Район":
                         addr = field2addr(row_item)
                         lab = [ADRESS_LIVE_LABELS[3], ADRESS_LIVE_LABELS[4]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
-# Проживание -> Город
-                    elif label0 == MANIPULATE_LABELS[13]:
+                    elif label0 == "Проживание -> Город":
                         addr = field2addr(row_item)
                         lab = [ADRESS_LIVE_LABELS[5], ADRESS_LIVE_LABELS[6]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
-# Проживание -> Населенный_пункт
-                    elif label0 == MANIPULATE_LABELS[14]:
+                    elif label0 == "Проживание -> Населенный_пункт":
                         addr = field2addr(row_item)
                         lab = [ADRESS_LIVE_LABELS[7], ADRESS_LIVE_LABELS[8]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
-# Проживание -> Улица
-                    elif label0 == MANIPULATE_LABELS[15]:
+                    elif label0 == "Проживание -> Улица":
                         addr = field2addr(row_item)
                         lab = [ADRESS_LIVE_LABELS[9], ADRESS_LIVE_LABELS[10]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
-#Адрес регистрации из_поля
-                    elif label0 == MANIPULATE_LABELS[17]:
+
+                    elif label0 == "Адрес регистрации из_поля":
                         result_row[ADRESS_REG_LABELS[0]] = '111111'
                         adress_reg = FullAdress(row_item)
 #                        qr = ''
@@ -2082,8 +2076,7 @@ class WorkerThread(QThread):
                         if len(n) != 6:
                             result_row[ADRESS_REG_LABELS[0]] = '111111'
 
-# Адрес проживания из поля
-                    elif label0 == MANIPULATE_LABELS[19]:
+                    elif label0 == "Адрес проживания из поля":
                         result_row[ADRESS_LIVE_LABELS[0]] = '111111'
                         adress_zhit = FullAdress(row_item)
 #                        qr = ''
@@ -2095,25 +2088,47 @@ class WorkerThread(QThread):
                         if len(n) != 6:
                             result_row[ADRESS_LIVE_LABELS[0]] = '111111'
 
-# Регион регистрации из номера
-                    elif label0 == MANIPULATE_LABELS[21]:
+                    elif label0 == "Регион регистрации из номера":
                         addr = field2addr(REGIONS[intl(row_item)])
                         lab = [ADRESS_REG_LABELS[1], ADRESS_REG_LABELS[2]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
 
-# Регион проживания из номера
-                    elif label0 == MANIPULATE_LABELS[23]:
+                    elif label0 == "Регион проживания из номера":
                         addr = field2addr(REGIONS[intl(row_item)])
                         lab = [ADRESS_LIVE_LABELS[1], ADRESS_LIVE_LABELS[2]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
-# Серия и номер паспорта из поля
-                    elif label0 == MANIPULATE_LABELS[25]:
+
+                    elif label0 == "Cерия и Номер паспорта из поля":
                         addr = field2sernum(row_item)
                         lab = [PASSPORT_DATA_LABELS[0],PASSPORT_DATA_LABELS[1]]
                         for j in range(len(addr)):
                             result_row[lab[j]] = addr[j]
+
+                    elif label0 == "Генератор некорректных СНИЛС":
+                        dbconfig = read_config(filename='move.ini', section='mysql')
+                        dbconn = MySQLConnection(**dbconfig)
+                        count_snils = 1
+                        cached_snils = 0
+                        while count_snils > 0:
+                            checksum_snils = self.checksum(self.start_snils)
+                            for i in range(self.start_snils_cs + 1, 99):
+                                if i != checksum_snils:
+                                    full_snils = self.start_snils * 100 + i
+                                    dbcursor = dbconn.cursor()
+                                    dbcursor.execute('SELECT `number` FROM clients WHERE `number` = %s', (full_snils,))
+                                    dbchk = dbcursor.fetchall()
+                                    if len(dbchk) == 0:
+                                        cached_snils = full_snils
+                                        count_snils -= 1
+                                        self.start_snils_cs = i
+                                        break
+                            if count_snils > 0:
+                                self.start_snils -= 1
+                                self.start_snils_cs = 0
+                        dbconn.close()
+                        result_row[SNILS_LABEL[0]] = normalize_snils(cached_snils)
 
                 elif label0 == '-------------------------':
                     continue
@@ -2124,9 +2139,8 @@ class WorkerThread(QThread):
                         count_snils = 1
                         cached_snils = 0
                         while count_snils > 0:
-                            self.start_snils -= 1
                             checksum_snils = self.checksum(self.start_snils)
-                            for i in range(0, 99):
+                            for i in range(self.start_snils_cs + 1, 99):
                                 if i != checksum_snils:
                                     full_snils = self.start_snils * 100 + i
                                     dbcursor = dbconn.cursor()
@@ -2135,6 +2149,11 @@ class WorkerThread(QThread):
                                     if len(dbchk) == 0:
                                         cached_snils = full_snils
                                         count_snils -= 1
+                                        self.start_snils_cs = i
+                                        break
+                            if count_snils > 0:
+                                self.start_snils -= 1
+                                self.start_snils_cs = 0
                         dbconn.close()
                         result_row[label0] = normalize_snils(cached_snils)
                         self.ws_comp.append([row_item, cached_snils])
