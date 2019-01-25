@@ -289,6 +289,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         dbconn.close()
         self.start_snils = int('{0:011d}'.format(dbrows[0][0])[:-2])    # 9 цифр неправильного СНИЛСа с которого уменьшаем
         self.start_snils_cs = int('{0:011d}'.format(dbrows[0][0])[-2:]) # контрольная сумма неправильного СНИЛСа
+        self.has_gen_snils = False
         return
 
     def checksum(self, snils_dig):  # Вычисляем 2 последних цифры СНИЛС по первым 9-ти
@@ -1412,16 +1413,16 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
 
         keys = {}
         last_cell = 0
-        has_gen_snils = False
+        self.has_gen_snils = False
         for num_item in range(self.tableWidget.rowCount()):
             if self.tableWidget.cellWidget(num_item, 0).currentText() == 'Генератор некорректных СНИЛС':
-                has_gen_snils = True
+                self.has_gen_snils = True
         for j, row in enumerate(self.sheet.rows):
             if j == 0:
                 for k, cell in enumerate(row):  # Проверяем, чтобы был СНИЛС
                     if str(cell.value).strip().upper() in IN_SNILS:
                         keys[IN_SNILS[0]] = k
-                if has_gen_snils:
+                if self.has_gen_snils:
                     q=0
                 elif len(keys) > 0:
                     for k, cell in enumerate(row):
@@ -1443,12 +1444,12 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                         if str(cell.value).strip() != '':
                             if k > last_cell:
                                 last_cell = k
-
-        self.clients_snils = []                                             # Добавляем СНИЛСы
-        for i, row in enumerate(self.sheet):
-            if i == 1:
-                continue
-            self.clients_snils.append(l(row[keys[IN_SNILS[0]]].value))
+        if not self.has_gen_snils:
+            self.clients_snils = []                                         # Добавляем СНИЛСы (для проверки на дубли)
+            for i, row in enumerate(self.sheet):
+                if i == 1:
+                    continue
+                self.clients_snils.append(l(row[keys[IN_SNILS[0]]].value))
 
         self.twAllExcels.setColumnCount(last_cell + 1)                      # Отображаем исходную таблицу
         self.twAllExcels.setRowCount(len(list(self.sheet.rows)) - 1)
@@ -1539,14 +1540,14 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         ws_log = wb_log.create_sheet('Лог')
         ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Начинаем'])
 
-                                                                        # Проверка на дубли исходной таблицы
-        doubles_in_input = list(set([x for x in self.clients_snils if self.clients_snils.count(x) > 1]))
-        if len(doubles_in_input):
-            ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Дубли в СНИЛС в исходной таблице'])
-            ws_input_doubles = wb_log.create_sheet('Дубли в СНИЛС в исходной таблице')
-            ws_input_doubles.append(['ID'])
-            for row in doubles_in_input:
-                ws_input_doubles.append([normalize_snils(row)])
+        if not self.has_gen_snils:                                      # Проверка на дубли исходной таблицы
+            doubles_in_input = list(set([x for x in self.clients_snils if self.clients_snils.count(x) > 1]))
+            if len(doubles_in_input):
+                ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Дубли в СНИЛС в исходной таблице'])
+                ws_input_doubles = wb_log.create_sheet('Дубли в СНИЛС в исходной таблице')
+                ws_input_doubles.append(['ID'])
+                for row in doubles_in_input:
+                    ws_input_doubles.append([normalize_snils(row)])
         ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Состояние программы:'])
         ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Исходный файл ', self.file_name])
         ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Конфигурационный файл ', self.cmbCfgFile.currentText()])
@@ -1968,6 +1969,9 @@ class WorkerThread(QThread):
         wb = Workbook(write_only=True)
         ws = wb.create_sheet('Лист1')
         ws.append(HEAD_RESULT_EXCEL_FILE)                                             # добавляем первую строку xlsx
+        dbconfig = read_config(filename='move.ini', section='mysql')
+        dbconn = MySQLConnection(**dbconfig)
+        dbcursor = dbconn.cursor()
 
         file_number = 1
         for num_row, row in enumerate(self.sheet.rows):
@@ -2107,8 +2111,6 @@ class WorkerThread(QThread):
                             result_row[lab[j]] = addr[j]
 
                     elif label0 == "Генератор некорректных СНИЛС":
-                        dbconfig = read_config(filename='move.ini', section='mysql')
-                        dbconn = MySQLConnection(**dbconfig)
                         count_snils = 1
                         cached_snils = 0
                         while count_snils > 0:
@@ -2116,7 +2118,6 @@ class WorkerThread(QThread):
                             for i in range(self.start_snils_cs + 1, 99):
                                 if i != checksum_snils:
                                     full_snils = self.start_snils * 100 + i
-                                    dbcursor = dbconn.cursor()
                                     dbcursor.execute('SELECT `number` FROM clients WHERE `number` = %s', (full_snils,))
                                     dbchk = dbcursor.fetchall()
                                     if len(dbchk) == 0:
@@ -2127,7 +2128,6 @@ class WorkerThread(QThread):
                             if count_snils > 0:
                                 self.start_snils -= 1
                                 self.start_snils_cs = 0
-                        dbconn.close()
                         result_row[SNILS_LABEL[0]] = normalize_snils(cached_snils)
 
                 elif label0 == '-------------------------':
@@ -2280,6 +2280,7 @@ class WorkerThread(QThread):
         wb.save(f)
         f = self.fname.replace(self.fname.split('/')[-1], 'err'.format(file_number) + self.fname.split('/')[-1])
         wb_err.save(f)
+        dbconn.close()
         if use_log:
             log_file.close()
         if GENERATE_SNILS:
