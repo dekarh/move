@@ -593,7 +593,7 @@ class Ui_Form(object):
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Form"))
-        self.leDir.setText(_translate("Form", "/home/da3/Загрузки/2019-01/"))
+        self.leDir.setText(_translate("Form", "/home/da3/Загрузки/2019-02/"))
         self.pbFond.setText(_translate("Form", "Фонд"))
         self.pbAgent.setText(_translate("Form", "Агент"))
         self.pbSigner.setText(_translate("Form", "Подписант"))

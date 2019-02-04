@@ -672,6 +672,9 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
 
         tuples_clients = []                                     # Формируем переменные для запросов
         tuples_contracts = []
+        self.progressBar.setMaximum(len(self.clients_ids)-1)
+        dbconn = MySQLConnection(**self.dbconfig)
+        cursor = dbconn.cursor()
         for i, client_id in enumerate(self.clients_ids):
             tuple_client = tuple()
             tuple_contract = tuple()
@@ -699,13 +702,22 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             tuple_client += (client_id,)
             tuples_clients.append(tuple_client)
             tuples_contracts.append(tuple_contract)
+            if i and not (i % 1000):
+                self.progressBar.setValue(i)
+                if self.leSQLcl.text():
+                    cursor.executemany(self.leSQLcl.text(), tuples_clients)
+                    dbconn.commit()
+                    tuples_clients = []
+                if self.leSQLco.text():
+                    cursor.executemany(self.leSQLco.text(), tuples_contracts)
+                    dbconn.commit()
+                    tuples_contracts = []
         if self.leSQLcl.text():
             ws_log.append([datetime.now().strftime("%H:%M:%S"), self.leSQLcl.text()])
             ws_log.append([datetime.now().strftime("%H:%M:%S")] + list(tuples_clients[0]))
-            dbconn = MySQLConnection(**self.dbconfig)
-            cursor = dbconn.cursor()
-            cursor.executemany(self.leSQLcl.text(),tuples_clients)
-            dbconn.commit()
+            if len(tuples_clients):
+                cursor.executemany(self.leSQLcl.text(),tuples_clients)
+                dbconn.commit()
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'update отработал'])
         else:
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'clients - нет запроса'])
@@ -714,16 +726,14 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         if self.leSQLco.text():
             ws_log.append([datetime.now().strftime("%H:%M:%S"), self.leSQLco.text()])
             ws_log.append([datetime.now().strftime("%H:%M:%S")] + list(tuples_contracts[0]))
-            dbconn = MySQLConnection(**self.dbconfig)
-            cursor = dbconn.cursor()
-            cursor.executemany(self.leSQLco.text(),tuples_contracts)
-            dbconn.commit()
+            if len(tuples_contracts):
+                cursor.executemany(self.leSQLco.text(),tuples_contracts)
+                dbconn.commit()
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'update отработал'])
         else:
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'contracts - нет запроса'])
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'contracts - нет данных'])
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'contracts - запрос не исполнен'])
-
         wb_log.save(log_name)
         q=0
 
