@@ -166,25 +166,33 @@ ERROR_VALUE = 'ERROR'
 SPLIT_FIELD = ','
 #SPLIT_FIELD = '_x0003_'  # Разделитель для адреса в одной строке (бывает '_x0003_')
 
-#ORDER_FIELD = [13, 0, 8, 1, 9, 2, 10, 3, 11, 4, 12, 5, 6, 7] # См def FullAddress(get_values():
+#ORDER_FIELD = [13, 0, 8, 1, 9, 2, 10, 3, 11, 4, 12, 5, 6, 7] # См def FullAdress(get_values():
 # ['Индекс', 'Регион', 'Тип_региона', 'Район', 'Тип_района', 'Город', 'Тип_города',
 #  'Населенный_пункт', 'Тип_населенного_пункта', 'Улица', 'Тип_улицы', 'Дом', 'Корпус', 'Квартира']
 
-REG_TYPES = ['обл', 'о', 'область', 'респ', 'республика', 'край', 'кр', 'ар', 'ао', 'авт']
+REG_TYPES = ['обл', 'о', 'область', 'респ', 'республика', 'край', 'кр', 'ар', 'ао', 'авт окр', 'автономный округ',
+             'авт обл', 'автономная область', 'город федерального значения', 'гфз']
 
 DISTRICT_TYPES = ['р-н', 'р', 'район']
 
 CITY_TYPES = ['г', 'гор', 'город']
 
-NP_TYPES = ['пгт', 'пос', 'поселение', 'поселок', 'посёлок', 'п', 'рп', 'кп', 'к', 'пс', 'сс', 'смн', 'вл', 'дп',
-            'нп', 'пст', 'ж/д_ст', 'с', 'м', 'д', 'дер', 'сл', 'ст', 'ст-ца', 'х', 'рзд', 'у', 'клх', 'свх', 'зим', 'мкр']
+NP_TYPES = ['пгт', 'поселок городского типа',  'посёлок городского типа', 'пос', 'поселение', 'поселок', 'посёлок',
+            'п', 'рп', 'рабочий посёлок', 'рабочий поселок', 'кп', 'курортный посёлок', 'курортный поселок', 'к', 'пс',
+            'сс', 'смн', 'вл', 'влад', 'владение', 'дп', 'дачный поселок', 'дачный посёлок', 'садовое товарищество',
+            'садоводческое некоммерческое товарищество', 'садоводческое товарищество', 'снт', 'нп', 'пст', 'ж/д_ст',
+            'ж/д ст', 'железнодорожная станция', 'с', 'село', 'м', 'д', 'дер', 'деревня', 'сл', 'ст', 'ст-ца',
+            'станица', 'х', 'хут', 'хутор', 'рзд', 'у', 'урочище', 'клх', 'колхоз', 'свх', 'совхоз', 'зим', 'зимовье',
+            'микрорайон', 'мкр']
 
-STREET_TYPES = ['аллея', 'а', 'бульвар', 'б-р', 'в/ч', 'городок', 'гск', 'кв-л', 'линия', 'наб', 'пер', 'переезд', 'пл',
-                'пр-кт', 'проезд', 'тер', 'туп', 'ул', 'ш', ]
+STREET_TYPES = ['аллея', 'а', 'бульвар', 'б-р', 'бул', 'в/ч', 'военная часть', 'военный городок', 'городок', 'гск',
+                'гаражно-строительный кооператив', 'гк', 'гаражный кооператив', 'кв-л', 'квартал', 'линия', 'лин',
+                'наб', 'набережная', 'переулок', 'пер', 'переезд', 'пл', 'площадь', 'пр-кт', 'проспект', 'пр',
+                'проезд', 'тер', 'терр', 'территория', 'туп', 'тупик', 'ул', 'улица', 'ш', 'шоссе']
 
 HOUSE_CUT_NAME = ['дом', 'д']
-CORPUS_CUT_NAME = ['корп', 'корпус']
-APARTMENT_CUT_NAME = ['кв']
+CORPUS_CUT_NAME = ['корп', 'корпус', 'стр', 'строение']
+APARTMENT_CUT_NAME = ['кв', 'квартира', 'оф', 'офис', 'ап', 'аппартаменты']
 ########################################################################################################################
 # ЗНАЧЕНИЕ В ПОЛЕ "ПОЛ" ИЗМЕНЯЕМ В ПРОЦЕССЕ
 female_gender_value = 'Ж'
@@ -501,43 +509,47 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             log_name += 'а' + str(self.agent_ids[self.cmbAgent.currentIndex()])
         log_name += '.xlsx'
 
-        all_clients_ids = "'" + self.clients_ids[0] + "'"       # Проверка на дубли clients
-        for i, client_id in enumerate(self.clients_ids):
-            if i == 0:
-                continue
-            all_clients_ids += ",'" + client_id + "'"
-        sql = "SELECT cl.client_id FROM clients AS cl WHERE cl.client_id IN (" + all_clients_ids + \
-              ") GROUP BY cl.client_id HAVING COUNT(cl.client_id) > 1 ORDER BY cl.client_id DESC"
-        dbconn = MySQLConnection(**self.dbconfig)
-        cursor = dbconn.cursor()
-        cursor.execute(sql)
-        rows = cursor.fetchall()
-        exit_because_doubles = False
-        if len(rows) > 0:
-            exit_because_doubles = True
-            ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Дубли в clients'])
-            ws_clients = wb_log.create_sheet('Дубли в clients')
-            for row in rows:
-                ws_clients.append(row[0])
-        else:
-            ws_log.append([datetime.now().strftime("%H:%M:%S"), ' В clients нет дублей'])
-                                                                # Проверка на дубли contracts
-        sql = "SELECT co.client_id FROM contracts AS co WHERE co.client_id IN (" + all_clients_ids + \
-              ") GROUP BY co.client_id HAVING COUNT(co.client_id) > 1 ORDER BY co.client_id DESC"
-        dbconn = MySQLConnection(**self.dbconfig)
-        cursor = dbconn.cursor()
-        cursor.execute(sql)
-        rows = cursor.fetchall()
-        if len(rows) > 0:
-            exit_because_doubles = True
-            ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Дубли в contracts'])
-            ws_contracts = wb_log.create_sheet('Дубли в contracts')
-            for row in rows:
-                ws_contracts.append(row[0])
-        else:
-            ws_log.append([datetime.now().strftime("%H:%M:%S"), ' В contracts нет дублей'])
+        if not self.chbNoBackup.isChecked():
+            all_clients_ids = "'" + self.clients_ids[0] + "'"       # Проверка на дубли clients
+            for i, client_id in enumerate(self.clients_ids):
+                if i == 0:
+                    continue
+                all_clients_ids += ",'" + client_id + "'"
+            sql = "SELECT cl.client_id FROM clients AS cl WHERE cl.client_id IN (" + all_clients_ids + \
+                  ") GROUP BY cl.client_id HAVING COUNT(cl.client_id) > 1 ORDER BY cl.client_id DESC"
+            dbconn = MySQLConnection(**self.dbconfig)
+            cursor = dbconn.cursor()
+            cursor.execute(sql)
+            rows = cursor.fetchall()
+            exit_because_doubles = False
+            if len(rows) > 0:
+                exit_because_doubles = True
+                ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Дубли в clients'])
+                ws_clients = wb_log.create_sheet('Дубли в clients')
+                for row in rows:
+                    ws_clients.append(row[0])
+            else:
+                ws_log.append([datetime.now().strftime("%H:%M:%S"), ' В clients нет дублей'])
+                                                                    # Проверка на дубли contracts
+            sql = "SELECT co.client_id FROM contracts AS co WHERE co.client_id IN (" + all_clients_ids + \
+                  ") GROUP BY co.client_id HAVING COUNT(co.client_id) > 1 ORDER BY co.client_id DESC"
+            dbconn = MySQLConnection(**self.dbconfig)
+            cursor = dbconn.cursor()
+            cursor.execute(sql)
+            rows = cursor.fetchall()
+            if len(rows) > 0:
+                exit_because_doubles = True
+                ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Дубли в contracts'])
+                ws_contracts = wb_log.create_sheet('Дубли в contracts')
+                for row in rows:
+                    ws_contracts.append(row[0])
+            else:
+                ws_log.append([datetime.now().strftime("%H:%M:%S"), ' В contracts нет дублей'])
+            if exit_because_doubles:  # Если дубли в clients или contracts - ничего не переносим
+                ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Аварийное завершение - дублирование записей'])
+                return
 
-                # Проверка на дубли исходной таблицы
+        # Проверка на дубли исходной таблицы
         doubles_in_input = list(set([x for x in self.clients_ids if self.clients_ids.count(x) > 1]))
         if len(doubles_in_input) > 0:
             ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Дубли в исходной таблице'])
@@ -547,32 +559,29 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         else:
             ws_log.append([datetime.now().strftime("%H:%M:%S"), ' В исходной таблице нет дублей'])
 
-        if exit_because_doubles:                          # Если дубли в clients или contracts - ничего не переносим
-            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Аварийное завершение - дублирование записей'])
-            return
 
-        ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Дублируем исходную excel таблицу в этот файл'])
-        ws_input = wb_log.create_sheet('Исходная таблица')
-        for table_row in self.table:
-            row = []
-            for cell in table_row:
-                row.append(cell)
-            ws_input.append(row)
-
-        ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Бэкап исходного состояния БД создан'])
-        ws_backup = wb_log.create_sheet('бэкап БД')
-        dbconn = MySQLConnection(**self.dbconfig)
-        cursor = dbconn.cursor()
-        sql = "SELECT cl.*, co.* FROM clients AS cl LEFT JOIN contracts AS co " \
-              "ON (cl.client_id = co.client_id) WHERE cl.client_id IN (" + all_clients_ids + ")"
-        cursor.execute(sql)
-        dbrows = cursor.fetchall()
-        ws_backup.append(cursor.column_names)
-        for dbrow in dbrows:
-            row = []
-            for dbcell in dbrow:
-                row.append(dbcell)
-            ws_backup.append(row)
+        if not self.chbNoBackup.isChecked():
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Дублируем исходную excel таблицу в этот файл'])
+            ws_input = wb_log.create_sheet('Исходная таблица')
+            for table_row in self.table:
+                row = []
+                for cell in table_row:
+                    row.append(cell)
+                ws_input.append(row)
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Бэкап исходного состояния БД создан'])
+            ws_backup = wb_log.create_sheet('бэкап БД')
+            dbconn = MySQLConnection(**self.dbconfig)
+            cursor = dbconn.cursor()
+            sql = "SELECT cl.*, co.* FROM clients AS cl LEFT JOIN contracts AS co " \
+                  "ON (cl.client_id = co.client_id) WHERE cl.client_id IN (" + all_clients_ids + ")"
+            cursor.execute(sql)
+            dbrows = cursor.fetchall()
+            ws_backup.append(cursor.column_names)
+            for dbrow in dbrows:
+                row = []
+                for dbcell in dbrow:
+                    row.append(dbcell)
+                ws_backup.append(row)
 
         ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Состояние программы:'])
         ws_log.append([datetime.now().strftime("%H:%M:%S"), 'файл ', self.file_name])

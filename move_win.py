@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'move_win_.ui'
+# Form implementation generated from reading ui file 'move_win.ui'
 #
 # Created by: PyQt5 UI code generator 5.11.2
 #
@@ -312,6 +312,9 @@ class Ui_Form(object):
         self.frMoveInf.setObjectName("frMoveInf")
         self.verticalLayout_12 = QtWidgets.QVBoxLayout(self.frMoveInf)
         self.verticalLayout_12.setObjectName("verticalLayout_12")
+        self.chbNoBackup = QtWidgets.QCheckBox(self.frMoveInf)
+        self.chbNoBackup.setObjectName("chbNoBackup")
+        self.verticalLayout_12.addWidget(self.chbNoBackup)
         self.lbMoveInf = QtWidgets.QLabel(self.frMoveInf)
         self.lbMoveInf.setText("")
         self.lbMoveInf.setObjectName("lbMoveInf")
@@ -602,6 +605,7 @@ class Ui_Form(object):
         self.chbFondStat.setText(_translate("Form", "Сбросить статусы Фонда"))
         self.chbArhivON.setText(_translate("Form", "Поставить флаг \"Архивный\""))
         self.chbArhivOFF.setText(_translate("Form", "Сбросить флаг \"Архивный\""))
+        self.chbNoBackup.setText(_translate("Form", "не делать БЭКАП"))
         self.chbDateFrom.setText(_translate("Form", "Выборка от"))
         self.chbDateTo.setText(_translate("Form", "Выборка до"))
         self.chbSetStatusInSaturn.setText(_translate("Form", "Проставить статус в Сатурне"))
