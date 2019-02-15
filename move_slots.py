@@ -527,7 +527,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                 ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Дубли в clients'])
                 ws_clients = wb_log.create_sheet('Дубли в clients')
                 for row in rows:
-                    ws_clients.append(row[0])
+                    ws_clients.append([row[0]])
             else:
                 ws_log.append([datetime.now().strftime("%H:%M:%S"), ' В clients нет дублей'])
                                                                     # Проверка на дубли contracts
@@ -542,7 +542,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                 ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Дубли в contracts'])
                 ws_contracts = wb_log.create_sheet('Дубли в contracts')
                 for row in rows:
-                    ws_contracts.append(row[0])
+                    ws_contracts.append([row[0]])
             else:
                 ws_log.append([datetime.now().strftime("%H:%M:%S"), ' В contracts нет дублей'])
             if exit_because_doubles:  # Если дубли в clients или contracts - ничего не переносим
