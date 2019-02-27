@@ -163,12 +163,14 @@ NEW_NULL_VALUE_FOR_HOME = 'заполнить'
 ERROR_VALUE = 'ERROR'
 ########################################################################################################################
 # СОКРАЩЕНИЯ ТИПОВ В АДРЕСЕ
-SPLIT_FIELD = ','
+SPLIT_FIELDS = ['.', ',', ' ', ';']
+SPLIT_FIELD = SPLIT_FIELDS[1]
 #SPLIT_FIELD = '_x0003_'  # Разделитель для адреса в одной строке (бывает '_x0003_')
 
-#ORDER_FIELD = [13, 0, 8, 1, 9, 2, 10, 3, 11, 4, 12, 5, 6, 7] # См def FullAdress(get_values():
+# Для варианта когда все поля по раздельности и перепутаны. Используется в FullAdress.get_values. Справочно:
 # ['Индекс', 'Регион', 'Тип_региона', 'Район', 'Тип_района', 'Город', 'Тип_города',
 #  'Населенный_пункт', 'Тип_населенного_пункта', 'Улица', 'Тип_улицы', 'Дом', 'Корпус', 'Квартира']
+ORDER_FIELD = [13, 0, 8, 1, 9, 2, 10, 3, 11, 4, 12, 5, 6, 7]
 
 REG_TYPES = ['обл', 'о', 'область', 'респ', 'республика', 'край', 'кр', 'ар', 'ао', 'авт окр', 'автономный округ',
              'авт обл', 'автономная область', 'город федерального значения', 'гфз']
@@ -193,11 +195,33 @@ STREET_TYPES = ['аллея', 'а', 'бульвар', 'б-р', 'бул', 'в/ч'
 HOUSE_CUT_NAME = ['дом', 'д']
 CORPUS_CUT_NAME = ['корп', 'корпус', 'стр', 'строение']
 APARTMENT_CUT_NAME = ['кв', 'квартира', 'оф', 'офис', 'ап', 'аппартаменты']
+
+ADRESS_TYPES = {
+'обл': 1, 'о': 1, 'область': 1, 'респ': 1, 'республика': 1, 'край': 1, 'кр': 1, 'ар': 1, 'ао': 1, 'авт окр': 1, 'автономный округ': 1, 'авт обл': 1, 'автономная область': 1, 'город федерального значения': 1, 'гфз': 1,
+'р-н': 3, 'р': 3, 'район': 3,
+'г': 5, 'гор': 5, 'город': 5,
+'пгт': 7, 'поселок городского типа': 7,  'посёлок городского типа': 7, 'пос': 7, 'поселение': 7, 'поселок': 7, 'посёлок': 7, 'п': 7, 'рп': 7, 'рабочий посёлок': 7, 'рабочий поселок': 7, 'кп': 7, 'курортный посёлок': 7, 'курортный поселок': 7, 'к': 7, 'пс': 7, 'сс': 7, 'смн': 7, 'вл': 7, 'влад': 7, 'владение': 7, 'дп': 7, 'дачный поселок': 7, 'дачный посёлок': 7, 'садовое товарищество': 7, 'садоводческое некоммерческое товарищество': 7, 'садоводческое товарищество': 7, 'снт': 7, 'нп': 7, 'пст': 7, 'ж/д_ст': 7, 'ж/д ст': 7, 'железнодорожная станция': 7, 'с': 7, 'село': 7, 'м': 7, 'дер': 7, 'деревня': 7, 'сл': 7, 'ст': 7, 'ст-ца': 7, 'станица': 7, 'х': 7, 'хут': 7, 'хутор': 7, 'рзд': 7, 'у': 7, 'урочище': 7, 'клх': 7, 'колхоз': 7, 'свх': 7, 'совхоз': 7, 'зим': 7, 'зимовье': 7, 'микрорайон': 7, 'мкр' : 7,
+'аллея': 9, 'а': 9, 'алл': 9, 'бульвар': 9, 'б-р': 9, 'бул': 9, 'блв': 9, 'в/ч': 9, 'военная часть': 9, 'военный городок': 9, 'городок': 9, 'гск': 9, 'гаражно-строительный кооператив': 9, 'гк': 9, 'гаражный кооператив': 9, 'кв-л': 9, 'квартал': 9, 'линия': 9, 'лин': 9, 'наб': 9, 'набережная': 9, 'переулок': 9, 'пер': 9, 'переезд': 9, 'пл': 9, 'площадь': 9, 'пр-кт': 9, 'проспект': 9, 'пр': 9, 'проезд': 9, 'тер': 9, 'терр': 9, 'территория': 9, 'туп': 9, 'тупик': 9, 'ул': 9, 'улица': 9, 'ш': 9, 'шоссе': 9,
+'дом': 11,  'д': 11,
+'корп': 12,  'корпус': 12,  'стр': 12,  'строение': 12,
+'кв': 13,  'квартира': 13,  'оф': 13,  'офис': 13,  'ап': 13,  'аппартаменты': 13
+}
+
+q1 = """
+'обл': 'REG_TYPES', 'о': 'REG_TYPES', 'область': 'REG_TYPES', 'респ': 'REG_TYPES', 'республика': 'REG_TYPES', 'край': 'REG_TYPES', 'кр': 'REG_TYPES', 'ар': 'REG_TYPES', 'ао': 'REG_TYPES', 'авт окр': 'REG_TYPES', 'автономный округ': 'REG_TYPES', 'авт обл': 'REG_TYPES', 'автономная область': 'REG_TYPES', 'город федерального значения': 'REG_TYPES', 'гфз': 'REG_TYPES',
+'р-н': 'DISTRICT_TYPES', 'р': 'DISTRICT_TYPES', 'район': 'DISTRICT_TYPES',
+'г': 'CITY_TYPES', 'гор': 'CITY_TYPES', 'город': 'CITY_TYPES',
+'пгт': 'NP_TYPES', 'поселок городского типа': 'NP_TYPES',  'посёлок городского типа': 'NP_TYPES', 'пос': 'NP_TYPES', 'поселение': 'NP_TYPES', 'поселок': 'NP_TYPES', 'посёлок': 'NP_TYPES', 'п': 'NP_TYPES', 'рп': 'NP_TYPES', 'рабочий посёлок': 'NP_TYPES', 'рабочий поселок': 'NP_TYPES', 'кп': 'NP_TYPES', 'курортный посёлок': 'NP_TYPES', 'курортный поселок': 'NP_TYPES', 'к': 'NP_TYPES', 'пс': 'NP_TYPES', 'сс': 'NP_TYPES', 'смн': 'NP_TYPES', 'вл': 'NP_TYPES', 'влад': 'NP_TYPES', 'владение': 'NP_TYPES', 'дп': 'NP_TYPES', 'дачный поселок': 'NP_TYPES', 'дачный посёлок': 'NP_TYPES', 'садовое товарищество': 'NP_TYPES', 'садоводческое некоммерческое товарищество': 'NP_TYPES', 'садоводческое товарищество': 'NP_TYPES', 'снт': 'NP_TYPES', 'нп': 'NP_TYPES', 'пст': 'NP_TYPES', 'ж/д_ст': 'NP_TYPES', 'ж/д ст': 'NP_TYPES', 'железнодорожная станция': 'NP_TYPES', 'с': 'NP_TYPES', 'село': 'NP_TYPES', 'м': 'NP_TYPES', 'дер': 'NP_TYPES', 'деревня': 'NP_TYPES', 'сл': 'NP_TYPES', 'ст': 'NP_TYPES', 'ст-ца': 'NP_TYPES', 'станица': 'NP_TYPES', 'х': 'NP_TYPES', 'хут': 'NP_TYPES', 'хутор': 'NP_TYPES', 'рзд': 'NP_TYPES', 'у': 'NP_TYPES', 'урочище': 'NP_TYPES', 'клх': 'NP_TYPES', 'колхоз': 'NP_TYPES', 'свх': 'NP_TYPES', 'совхоз': 'NP_TYPES', 'зим': 'NP_TYPES', 'зимовье': 'NP_TYPES', 'микрорайон': 'NP_TYPES', 'мкр' : 'NP_TYPES',
+'аллея': 'STREET_TYPES', 'а': 'STREET_TYPES', 'алл': 'STREET_TYPES', 'бульвар': 'STREET_TYPES', 'б-р': 'STREET_TYPES', 'бул': 'STREET_TYPES', 'блв': 'STREET_TYPES', 'в/ч': 'STREET_TYPES', 'военная часть': 'STREET_TYPES', 'военный городок': 'STREET_TYPES', 'городок': 'STREET_TYPES', 'гск': 'STREET_TYPES', 'гаражно-строительный кооператив': 'STREET_TYPES', 'гк': 'STREET_TYPES', 'гаражный кооператив': 'STREET_TYPES', 'кв-л': 'STREET_TYPES', 'квартал': 'STREET_TYPES', 'линия': 'STREET_TYPES', 'лин': 'STREET_TYPES', 'наб': 'STREET_TYPES', 'набережная': 'STREET_TYPES', 'переулок': 'STREET_TYPES', 'пер': 'STREET_TYPES', 'переезд': 'STREET_TYPES', 'пл': 'STREET_TYPES', 'площадь': 'STREET_TYPES', 'пр-кт': 'STREET_TYPES', 'проспект': 'STREET_TYPES', 'пр': 'STREET_TYPES', 'проезд': 'STREET_TYPES', 'тер': 'STREET_TYPES', 'терр': 'STREET_TYPES', 'территория': 'STREET_TYPES', 'туп': 'STREET_TYPES', 'тупик': 'STREET_TYPES', 'ул': 'STREET_TYPES', 'улица': 'STREET_TYPES', 'ш': 'STREET_TYPES', 'шоссе': 'STREET_TYPES',
+'дом': 'HOUSE_CUT_NAME',  'д': 'HOUSE_CUT_NAME',
+'корп': 'CORPUS_CUT_NAME',  'корпус': 'CORPUS_CUT_NAME',  'стр': 'CORPUS_CUT_NAME',  'строение': 'CORPUS_CUT_NAME',
+'кв': 'APARTMENT_CUT_NAME',  'квартира': 'APARTMENT_CUT_NAME',  'оф': 'APARTMENT_CUT_NAME',  'офис': 'APARTMENT_CUT_NAME',  'ап': 'APARTMENT_CUT_NAME',  'аппартаменты': 'APARTMENT_CUT_NAME'
+"""
 ########################################################################################################################
 # ЗНАЧЕНИЕ В ПОЛЕ "ПОЛ" ИЗМЕНЯЕМ В ПРОЦЕССЕ
-female_gender_value = 'Ж'
-male_gender_value = 'М'
-gender_length = 1
+#female_gender_value = 'Ж'
+#male_gender_value = 'М'
+#gender_length = 1
 ########################################################################################################################
 # ЗАПОЛНЕНИЕ Агент_Ид, Подписант_Ид, Пред_Страховщик_Ид
 #AGENT_ID = '10061'
@@ -287,7 +311,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         self.tab_names = {}
         self.table = []
         self.twParsingResult.hide()
-        self.cmbGenderType.addItems(['М или Ж', 'Муж. или Жен.', 'Мужской или Женский'])
+        self.cmbGenderType.addItems(['М или Ж', '0 или 1', 'Мужской или Женский'])
         self.refresh()
         dbconfig = read_config(filename='move.ini', section='mysql')
         dbconn = MySQLConnection(**dbconfig)
@@ -1528,13 +1552,13 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             self.frSigner.setStyleSheet("QFrame{background-image: url(./x.png)}")
             return
 
-        if self.cmbGenderType == 0:
+        if self.cmbGenderType.currentIndex() == 0:
             female_gender_value = 'Ж'
             male_gender_value = 'М'
             gender_length = 1
-        elif self.cmbGenderType == 1:
-            female_gender_value = 'Ж'
-            male_gender_value = 'М'
+        elif self.cmbGenderType.currentIndex() == 1:
+            female_gender_value = '1'
+            male_gender_value = '0'
             gender_length = 1
         else:
             female_gender_value = 'Ж'
@@ -1606,6 +1630,18 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
 
 
     def previewImport(self):
+        if self.cmbGenderType.currentIndex() == 0:
+            female_gender_value = 'Ж'
+            male_gender_value = 'М'
+            gender_length = 1
+        elif self.cmbGenderType.currentIndex() == 1:
+            female_gender_value = '1'
+            male_gender_value = '0'
+            gender_length = 1
+        else:
+            female_gender_value = 'Ж'
+            male_gender_value = 'М'
+            gender_length = 1
         err_from_log = {}
         self.twParsingResult.setColumnCount(0)
         self.twParsingResult.setRowCount(0)
@@ -1822,7 +1858,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                 elif label0 in DATE_BIRTH_LABEL:
                     result_row[label0] = normalize_date(row_item)
                 elif label0 in GENDER_LABEL:
-                    result_row[label0] = normalize_gender(row_item)
+                    result_row[label0] = normalize_gender(row_item, female_gender_value, male_gender_value, gender_length)
                 elif label0 == ADRESS_REG_LABELS[0] or label0 == ADRESS_LIVE_LABELS[0]:
                     result_row[label0] = normalize_index(row_item)
                 elif label0 in ADRESS_REG_LABELS[11]:
@@ -2202,7 +2238,7 @@ class WorkerThread(QThread):
                 elif label0 in DATE_BIRTH_LABEL:
                     result_row[label0] = normalize_date(row_item)
                 elif label0 in GENDER_LABEL:
-                    result_row[label0] = normalize_gender(row_item)
+                    result_row[label0] = normalize_gender(row_item, female_gender_value, male_gender_value, gender_length)
                 elif label0 == ADRESS_REG_LABELS[0] or label0 == ADRESS_LIVE_LABELS[0]:
                     result_row[label0] = normalize_index(row_item)
                 elif label0 in ADRESS_REG_LABELS[11]:
@@ -2440,7 +2476,7 @@ def field2addr(field):
 #        else:
 #            return self.gender_from_fio()
 
-def normalize_gender(gender):
+def normalize_gender(gender, female_gender_value, male_gender_value, gender_length):
     gender = str(gender).strip()
     if gender =='':
         return NEW_NULL_VALUE_FOR_GENDER
@@ -2601,8 +2637,10 @@ def normalize_home(tx):
 
 
 class FullAdress(BaseClass):
-    def __init__(self, field=''):
+    def __init__(self, field='', tip='по типам субъектов'):
+    #def __init__(self, field='', tip='стандартный'):
         self.field = str(field)
+        self.tip = tip
         self.full_adress = []
         self.FULL_ADRESS_DICT = {}
         for label in FULL_ADRESS_LABELS:
@@ -2612,7 +2650,7 @@ class FullAdress(BaseClass):
     def normalize_adress(self):
         if len(self.field) != 0 and self.field != NULL_VALUE:
             self.field = self.field.lower()
-            values = self.field.split(SPLIT_FIELD)
+            values = self.field.split(SPLIT_FIELD) # разделили на массив разделителем SPLIT_FIELD
             for i, word in enumerate(values):
                 n = []
                 word = word.strip()
@@ -2653,36 +2691,121 @@ class FullAdress(BaseClass):
             self.full_adress.append(self.FULL_ADRESS_DICT[label].upper())
         return self.full_adress
 
-    def get_values(self):  # Когда адрес 414000, г. Астрахань, ул. Такая, д. Т...
-        output_list = []
-        for elem in self.create_output_list():
-            output_list.append(elem.strip())
-        return output_list
-
-    a = """
-    def get_values(self):                           # Когда все поля по раздельности...
-        output_list = []
-        if len(self.field) != 0 and self.field != NULL_VALUE:
-            self.field = self.field.lower()
-            values = self.field.split(SPLIT_FIELD)
-            for i, nn in enumerate(ORDER_FIELD):
-                if nn < len(values):
-                    output_list.append(values[nn])
+    def get_values(self):
+        if self.tip == 'стандартный':
+            # Когда адрес 414000, г. Астрахань, ул. Такая, д. Т...
+            output_list = []
+            for elem in self.create_output_list():
+                output_list.append(elem.strip())
             return output_list
-        else:
-            if self.field == NULL_VALUE:
-                return NEW_NULL_VALUE
+        elif self.tip == 'перемешаный':
+            # Когда все поля по раздельности и перемешаны...
+            output_list = []
+            if len(self.field) != 0 and self.field != NULL_VALUE:
+                self.field = self.field.lower()
+                values = self.field.split(SPLIT_FIELD)
+                for i, nn in enumerate(ORDER_FIELD):
+                    if nn < len(values):
+                        output_list.append(values[nn])
+                return output_list
             else:
-                return NEW_NULL_VALUE
+                if self.field == NULL_VALUE:
+                    return NEW_NULL_VALUE
+                else:
+                    return NEW_NULL_VALUE
+        elif self.tip == 'по типам субъектов':
+            output_list = []
+            if len(self.field) != 0 and self.field != NULL_VALUE:
+                self.field = self.field.lower()
+                breaks = {}
+                breaks_len = {}
+                breaks_name = {}
+                for adress_type in ADRESS_TYPES:
+                    for left in SPLIT_FIELDS:
+                        for right in SPLIT_FIELDS:
+                            if len(self.field.split(left + adress_type + right)) > 1:
+                                breaks[ADRESS_TYPES[adress_type]] = self.field.find(left + adress_type + right)
+                                breaks_name[ADRESS_TYPES[adress_type]] = adress_type
+                digits_count = 0
+                digits_pos = 0
+                index_pos = -1
+                for i, char in enumerate(self.field):
+                    if char in digits:
+                        if i - digits_pos > 1 or digits_count > 6:
+                            digits_count = 1
+                        else:
+                            digits_count += 1
+                        digits_pos = i
+                        if digits_count == 6:
+                            index_pos = i - 5
+
+                if index_pos > -1:
+                    breaks[0] = index_pos + 6
+                    breaks_len[0] = 6
+                    breaks_name[0] = ''
+
+                # сортируем по значениям словаря
+                breaks_sorted = OrderedDict(sorted(breaks.items(), key=lambda t: t[1]))
+                break_sorted_last = -1
+                output_dict = {}
+                for i, break_sorted in enumerate(breaks_sorted):
+                    if break_sorted == 0: # индекс
+                        output_dict[break_sorted] = self.field[breaks_sorted[break_sorted] - breaks_len[break_sorted]:
+                                                               breaks_sorted[break_sorted]]
+                        break_sorted_last = break_sorted
+                        continue
+                    # ищем значение перед типом субъекта
+                    if break_sorted_last == -1:
+                        subject = self.field[:breaks_sorted[break_sorted]]
+                        breaks_len[break_sorted] = len(breaks_name[break_sorted_last])
+                    else:
+                        subject = self.field[breaks_sorted[break_sorted_last] + len(breaks_name[break_sorted_last]) + 1:
+                                             breaks_sorted[break_sorted]]
+                        breaks_len[break_sorted] = len(breaks_name[break_sorted])
+                    for j in range(5):  # тщательно обрезаем разделительные символы с концов строки
+                        for split_field in SPLIT_FIELDS:
+                            subject = subject.strip(split_field)
+                    if len(subject):    # что-нибудь осталось?
+                        output_dict[break_sorted] = subject
+                    else:               # не осталось - ищем значение после типа субъекта
+                        try:
+                            subject = self.field[breaks_sorted[break_sorted] + len(breaks_name[break_sorted]) + 1
+                                                           :breaks_sorted[list(breaks_sorted.keys())[i + 1]]]
+                        except IndexError:
+                            subject = self.field[breaks_sorted[break_sorted] + len(breaks_name[break_sorted]) + 1:]
+                        for j in range(5):
+                            for split_field in SPLIT_FIELDS:
+                                subject = subject.strip(split_field)
+                        if len(subject):
+                            output_dict[break_sorted] = subject
+                            breaks_len[break_sorted] = len(subject)
+                    break_sorted_last = break_sorted
+                    if break_sorted == 11:  # дом - нет типа субъекта
+                        pass
+                    elif break_sorted == 12:  # корпус - нет типа субъекта
+                        pass
+                    elif break_sorted == 13:  # квартира - нет типа субъекта
+                        pass
+                    else: # у остальных есть тип субъекта
+                        pass
 
 
-    # def __call__(self, *args, **kwargs):
-    #     return self.create_output_list()
+                # записываем пустые строки если не нашли такую позицию
+                for i in range(13):
+                    if i in output_dict.keys():
+                        output_list.append(output_dict[i])
+                    else:
+                        output_list.append('')
+
+                pass
 
 
+
+# def __call__(self, *args, **kwargs):
+#     return self.create_output_list()
 # f = FullAdress('123592, Москва г, строгинский бульвар, д. 26, корпус 2, кв. 425')
 # print(f.get_values())
-    """
+
 
 class Phone(BaseClass):
     def __init__(self, tel_mob='', tel_rod='', tel_dom=''):
