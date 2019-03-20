@@ -418,9 +418,11 @@ class FullAdress(BaseClass):
         home_cut = 0
         home_pass = 0
         tek_home = ''
+        last_i = 0
         for i in range(5):
+            #last_break_sorted = list(breaks_sorted.keys())[0]
             for break_sorted in breaks_sorted:
-                if break_sorted == 0: # индекс
+                if break_sorted == 0 and len(breaks_sorted[0]) > i: # индекс
                     try:
                         if home_cut: # дом-корпус-квартира (окончание)
                             cutted_end.append(breaks_sorted[break_sorted][i])
@@ -436,7 +438,7 @@ class FullAdress(BaseClass):
                                                                                     breaks_len[break_sorted][i]])
                     except IndexError:
                         pass
-                elif break_sorted == 11: # дом-корпус-квартира (начало)
+                elif break_sorted == 11 and len(breaks_sorted[0]) > i: # дом-корпус-квартира (начало)
                     try:
                         cutted_begin.append(breaks_sorted[break_sorted][i] - len(breaks_name[break_sorted][i]) - 1)
                         home_cut = breaks_sorted[break_sorted][i]
@@ -445,22 +447,24 @@ class FullAdress(BaseClass):
                         pass
                 else:
                     if home_cut:
-                        if break_sorted > 11:
+                        if break_sorted > 11 and len(breaks_sorted[0]) > i:
                             try:
                                 tek_home += ', ' + self.field[home_pass:breaks_sorted[break_sorted][i]].strip(
                                                    )[:-len(breaks_name[break_sorted][i])].strip()
                                 home_pass = breaks_sorted[break_sorted][i] - len(breaks_name[break_sorted][i]) - 1
                             except IndexError:
                                 pass
-                        elif break_sorted < 11: # дом-корпус-квартира (окончание)
+                        elif break_sorted < 11 and len(breaks_sorted[0]) > i: # дом-корпус-квартира (окончание)
                             try:
-                                cutted_end.append(breaks_sorted[break_sorted][i])
-                                tek_home += ', ' + self.field[home_pass:breaks_sorted[break_sorted][i]].strip()
+                                cutted_end.append(breaks_sorted[last_break_sorted][i])
+                                tek_home += ', ' + self.field[home_pass:breaks_sorted[last_break_sorted][i]].strip()
                                 home_cut = 0
                                 self.homes.append(tek_home)
                                 tek_home = ''
                             except IndexError:
                                 pass
+                last_break_sorted = break_sorted
+            last_i = i
         if len(cutted_begin) != len(cutted_end):
             cutted_end.append(len(self.field))
             tek_home += ', ' + self.field[home_pass:].strip()
@@ -639,7 +643,7 @@ class FullAdress(BaseClass):
 
 
 
-tek_adress = '443076 Самарская обл, г Самара, Балаковская ул, дом № 20, кв.113; 443076 Самарская обл, г Самара, Балаковская ул, дом № 20, кв.113'
+tek_adress = ' 223321 Самарская обл, г Самара, Балаковская ул, дом № 20, кв.113; 223321 Самарская обл, г Самара, Балаковская ул, дом № 20, кв.113'
 
 cut_adress = 'Самарская Самара Балаковская'
 res = requests.get('http://127.0.0.1:23332/find/' + cut_adress + '?strong=1')
