@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# для поиска по базе адресов нужно стартовать сервисы sphinx и fias
 
 from subprocess import Popen, PIPE
 import os
@@ -1620,7 +1621,8 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
 
         self.workerThread = WorkerThread(sheet=self.sheet, tableWidget=self.tableWidget,
                                          fname=self.file_name, agent=self.agent_ids[self.cmbAgent.currentIndex()],
-                                         signer=self.signer_ids[self.cmbSigner.currentIndex()])  # <<<<<<<<<<<<<<<<<<<<<<<<<запускаем подпроцесс
+                                         signer=self.signer_ids[self.cmbSigner.currentIndex()],
+                                         cmbGenderType=self.cmbGenderType)  # <<<<<<<<<<<<<<<<<<<<<<<<<запускаем подпроцесс
         self.workerThread.progress_value.connect(self.updateProgressBar)
         self.workerThread.start()
         self.updateProgressBar(0)
@@ -1946,13 +1948,14 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
 class WorkerThread(QThread):
     progress_value = QtCore.pyqtSignal(int)
 
-    def __init__(self, tableWidget, sheet, fname, agent, signer, parent=None, ):
+    def __init__(self, tableWidget, sheet, fname, agent, signer, parent=None, cmbGenderType=None):
         super(WorkerThread, self).__init__(parent)
         self.tableWidget = tableWidget
         self.sheet = sheet
         self.fname = fname
         self.agent_id = agent
         self.signer_id = signer
+        self.cmbGenderType = cmbGenderType
         dbconfig = read_config(filename='move.ini', section='mysql')
         dbconn = MySQLConnection(**dbconfig)
         dbcursor = dbconn.cursor()
@@ -1983,6 +1986,18 @@ class WorkerThread(QThread):
         self.start_process()
 
     def start_process(self):
+        if self.cmbGenderType.currentIndex() == 0:
+            female_gender_value = 'Ж'
+            male_gender_value = 'М'
+            gender_length = 1
+        elif self.cmbGenderType.currentIndex() == 1:
+            female_gender_value = '1'
+            male_gender_value = '0'
+            gender_length = 1
+        else:
+            female_gender_value = 'Ж'
+            male_gender_value = 'М'
+            gender_length = 1
         lname = self.fname[0:self.fname.rfind('xlsx')]+ 'log'
         err_from_log = {}
         use_log = False
