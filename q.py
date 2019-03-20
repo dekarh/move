@@ -1,6 +1,8 @@
 from string import digits
 from collections import OrderedDict
 import requests, json
+import openpyxl, sys
+from openpyxl import Workbook
 
 from lib import read_config, l, s, fine_phone, format_phone
 
@@ -122,7 +124,7 @@ EAST_GENDER = ['кызы', 'оглы']
 # НУЛЕВЫЕ ЗНАЧЕНИЯ
 NULL_VALUE = '\\N'  # НУЛЕВОЕ ЗНАЧЕНИЕ В ФАЙЛЕ
 NEW_NULL_VALUE = ''  # НОВОЕ НУЛЕВОЕ ЗНАЧЕНИЕ
-
+NEW_NULL_VALUE_FOR_ADDRESS = ['', '', '', '', '', '', '', '', '', '', '', '', '']
 NEW_NULL_VALUE_FOR_DATE = '11.11.1111'
 NEW_NULL_VALUE_FOR_SERIYA_PASSPORTA = '1111'
 NEW_NULL_VALUE_FOR_NOMER_PASSPORTA = '111111'
@@ -345,8 +347,29 @@ class FullAdress(BaseClass):
         return self.full_adress
 
     def cut_adress(self):
-        # Находим все разделители полей !!!!! ПЕРЕДЕЛАЛ ПОД ДУБЛИ !!!!!!
         self.field = self.field.lower()
+        # Заменить разделители на пробелы, схлопнуть двойные пробелы в одинарные
+        field_cut = self.field
+        for cut in SPLIT_FIELDS:
+            field_cut = field_cut.replace(cut, ' ')
+        while field_cut.find('  ') > -1:
+            field_cut = field_cut.replace('  ', ' ')
+        words = field_cut.split()
+        # разделяем дома и деревни
+        field_cut = ''
+        for i, word in enumerate(words):
+            if word == 'д':
+                is_willage = True
+                for char in words[i + 1]:
+                    if char in digits:
+                        is_willage = False
+                        break
+                if is_willage:
+                    words[i] = 'дер'
+            field_cut += words[i] + ' '
+
+        self.field = field_cut.strip()
+        field_cut = ''
         breaks = {}
         breaks_len = {}
         breaks_name = {}
@@ -526,17 +549,20 @@ class FullAdress(BaseClass):
                 return output_list
             else:
                 if self.field == NULL_VALUE:
-                    return NEW_NULL_VALUE
+                    return NEW_NULL_VALUE_FOR_ADDRESS
                 else:
-                    return NEW_NULL_VALUE
+                    return NEW_NULL_VALUE_FOR_ADDRESS
         elif self.tip == 'по типам субъектов':
             # Заменить разделители на пробелы, схлопнуть двойные пробелы в одинарные
+            if self.field == '':
+                return NEW_NULL_VALUE_FOR_ADDRESS
             field_cut = self.field
             for cut in SPLIT_FIELDS:
                 field_cut = field_cut.replace(cut, ' ')
             while field_cut.find('  ') > -1:
                 field_cut = field_cut.replace('  ', ' ')
             self.field = field_cut
+            all_homes = ''
             output_list = []
             breaked_address = False
             if len(self.field) > 0 and self.field != NULL_VALUE:
@@ -557,11 +583,66 @@ class FullAdress(BaseClass):
                             breaked_address = True
                 else:
                     all_index = '111111'
-                res = requests.get('http://127.0.0.1:23332/find/' + self.field_home + '?strong=1')
+                try:
+                    res = requests.get('http://127.0.0.1:23332/find/' + self.field_home)
+                except Exception as e:
+                    print('Сервис адресов не запущен')
+                    sys.exit()
                 if res.status_code == 200:
-                    ajson = json.loads(bytes.decode(res.content))
-                    print(all_index + ', ' + ajson[0]['text'] + all_homes)
+                    try:
+                        ajson = json.loads(bytes.decode(res.content))
+                        self.field = all_index + ', ' + ajson[0]['text'] + all_homes
+                    except KeyError:
+                        if len(self.index) > 1:
+                            return ['', '', '', '', '', '', '', '', all_index + self.field_home + all_homes, '', '', '',
+                                    '']
+                        else:
+                            return [all_index,'','','','','','','', self.field_home + all_homes,'','','','']
+                    except IndexError:
+                        if len(self.index) > 1:
+                            return ['', '', '', '', '', '', '', '', all_index + self.field_home + all_homes, '', '', '',
+                                    '']
+                        else:
+                            return [all_index,'','','','','','','', self.field_home + all_homes,'','','','']
+                    address_dict = {}
+                    address_words = self.field.split(',')
+                    # разделяем дома и деревни
+                    field_cut = ''
+                    for i, word in enumerate(address_words):
+                        if word.find(' д ') > -1:
+                            is_willage = True
+                            for char in address_words[i].replace(' д ',''):
+                                if char in digits:
+                                    is_willage = False
+                                    break
+                            if is_willage:
+                                address_words[i] = address_words[i].replace(' д ',' дер ')
+                        field_cut += address_words[i] + ', '
+                    address_words = field_cut.split(',')
+                    for address_word in address_words:
+                        for address_type in ADRESS_TYPES:
+                            if address_word.find(' ' + address_type + ' ') > -1:
+                                address_dict[ADRESS_TYPES[address_type]] = address_word.replace(' ' + address_type +
+                                                                                                        ' ', '').strip()
+                                if ADRESS_TYPES[address_type] and ADRESS_TYPES[address_type] < 10:
+                                    address_dict[ADRESS_TYPES[address_type] + 1] = address_type
+                    address_words = []
+                    for i, address_word in enumerate(FULL_ADRESS_LABELS):
+                        if not i:
+                            address_words.append(all_index)
+                            continue
+                        try:
+                            address_words.append(address_dict[i])
+                        except KeyError:
+                            address_words.append('')
+                    return address_words
+                else:
+                    if len(self.index) > 1:
+                        return ['', '', '', '', '', '', '', '', all_index + self.field_home + all_homes, '', '', '', '']
+                    else:
+                        return [all_index, '', '', '', '', '', '', '', self.field_home + all_homes, '', '', '', '']
 
+                q1 = """    
                 breaks = {}
                 breaks_len = {}
                 breaks_name = {}
@@ -643,17 +724,35 @@ class FullAdress(BaseClass):
                         output_list.append('')
 
                 pass
+                """
 
 
+#tek_adress = '140125 ОБЛ МОСКОВСКАЯ Р-Н РАМЕНСКИЙ Д ЧУЛКОВО ДОМ 88'
+#print(tek_adress)
+#adress_reg = FullAdress(tek_adress)
+#a = adress_reg.get_values()
+#print(' '.join(adress_reg.get_values()))
 
-tek_adress = ' 322236 Самарская обл, г Самара, Балаковская ул, дом № 20, кв.113;  Самарская обл, г Самара, Балаковская ул, дом № 20, кв.113'
+wb = openpyxl.load_workbook(sys.argv[1], read_only=True)
+ws = wb[wb.sheetnames[0]]
+for i, row in enumerate(ws.rows):
+    for j, cell in enumerate(row):
+        if i:
+            if j == 1:
+                tek_adress = cell.value
+                print(tek_adress)
+                adress_reg = FullAdress(tek_adress)
+                print(' '.join(adress_reg.get_values()))
 
-cut_adress = 'Самарская Самара Балаковская'
-res = requests.get('http://127.0.0.1:23332/find/' + cut_adress + '?strong=1')
-if res.status_code == 200:
-    ajson = json.loads(bytes.decode(res.content))
-    print(ajson[0]['text'])
+
+#tek_adress = ' 322236 Самарская обл, г Самара, Балаковская ул, дом № 20, кв.113;  Самарская обл, г Самара, Балаковская ул, дом № 20, кв.113'
+
+#cut_adress = 'Самарская Самара Балаковская'
+#res = requests.get('http://127.0.0.1:23332/find/' + cut_adress + '?strong=1')
+#if res.status_code == 200:
+#    ajson = json.loads(bytes.decode(res.content))
+#    print(ajson[0]['text'])
 # добавить исключение из текста сокращений ФИАС и обрезка хвоста, начиная от дома
-adress_reg = FullAdress(tek_adress)
-a = adress_reg.get_values()
-pass
+#adress_reg = FullAdress(tek_adress)
+#a = adress_reg.get_values()
+#pass
