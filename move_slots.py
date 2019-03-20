@@ -150,7 +150,7 @@ EAST_GENDER = ['кызы', 'оглы']
 # НУЛЕВЫЕ ЗНАЧЕНИЯ
 NULL_VALUE = '\\N'  # НУЛЕВОЕ ЗНАЧЕНИЕ В ФАЙЛЕ
 NEW_NULL_VALUE = ''  # НОВОЕ НУЛЕВОЕ ЗНАЧЕНИЕ
-
+NEW_NULL_VALUE_FOR_ADDRESS = ['', '', '', '', '', '', '', '', '', '', '', '', '']
 NEW_NULL_VALUE_FOR_DATE = '11.11.1111'
 NEW_NULL_VALUE_FOR_SERIYA_PASSPORTA = '1111'
 NEW_NULL_VALUE_FOR_NOMER_PASSPORTA = '111111'
@@ -164,7 +164,7 @@ NEW_NULL_VALUE_FOR_HOME = 'заполнить'
 ERROR_VALUE = 'ERROR'
 ########################################################################################################################
 # СОКРАЩЕНИЯ ТИПОВ В АДРЕСЕ
-SPLIT_FIELDS = ['.', ',', ' ', ';']
+SPLIT_FIELDS = ['.', ',', ' ', ';', '№']
 SPLIT_FIELD = SPLIT_FIELDS[1]
 #SPLIT_FIELD = '_x0003_'  # Разделитель для адреса в одной строке (бывает '_x0003_')
 
@@ -207,6 +207,34 @@ ADRESS_TYPES = {
 'корп': 12,  'корпус': 12,  'стр': 12,  'строение': 12,
 'кв': 13,  'квартира': 13,  'оф': 13,  'офис': 13,  'ап': 13,  'аппартаменты': 13
 }
+
+ALL_CUT_NAMES = [
+    'а обл','а окр','АО','Аобл','г','г','г ф з','гфз','край','обл','обл','округ','Респ','респ','АО','АО','вн тер г',
+    'г о', 'го','м р-н','п','пос','р-н','тер','у','у','волость','г','г','дп','кп','массив','п','п/о','пгт','пгт','рп',
+    'с/а','с/мо','с/о','с/п','с/с','тер','р-н','тер','аал','автодорога','арбан','аул','волость','высел','г','г-к','гп',
+    'д','дп','ж/д б-ка','ж/д пл-ка','ж/д пл-ма','ж/д_будка','ж/д_казарм','ж/д_оп','ж/д_платф','ж/д_пост','ж/д_рзд',
+    'ж/д_ст','жилзона','жилрайон','заимка','казарма','кв-л','кордон','кп','лпх','м','массив','мкр','нп','остров','п',
+    'п/о','п/р','п/ст','пгт','пгт','погост','починок','промзона','рзд','рп','с','сл','снт','ст','ст-ца','тер','у','х',
+    'а/я','ал','аллея','балка','берег','б-р','бугор','вал','взв','въезд','г-к','гск','д','днп','дор','ж/д_будка',
+    'ж/д_казарм','ж/д_оп','ж/д_платф','ж/д_пост','ж/д_рзд','ж/д_ст','жт','заезд','ззд','зона','казарма','кв-л','км',
+    'кольцо','коса','к-цо','линия','лн','м','маяк','мгстр','местность','мкр','мост','н/п','наб','наб','нп','остров',
+    'п','п/о','п/р','п/ст','парк','пер','пер','пер-д','переезд','пл','платф','пл-ка','полустанок','пр-д','пр-к','пр-ка'
+    ,'пр-кт','пр-лок','проезд','промзона','просек','просека','проселок','проул','проулок','рзд','рзд','ряд','ряды','с',
+    'с/т','сад','сзд','с-к','сквер','сл','снт','спуск','с-р','ст','стр','тер','тер ДНТ','тер СНТ','тракт','туп','ул',
+    'ул','уч-к','ф/х','ферма','х','ш','ш','влд','д','двлд','ДОМ','зд','к','кот','ОНС','пав','соор','стр','шахта','г-ж',
+    'кв','ком','офис','п-б','подв','помещ','раб уч','скл','торг зал','цех','вн р-н','г п','с п','с/с','а/я','аал','ал',
+    'арбан','аул','б-г','б-р','вал','взд','г-к','гск','д','днп','дор','ж/д б-ка','ж/д к-ма','ж/д пл-ма','ж/д рзд',
+    'ж/д ст','ж/р','ззд','зона','кв-л','км','коса','к-цо','лн','местность','месторожд','м-ко','мкр','мкр','н/п','наб',
+    'ост-в','п','п/р','парк','пер','пер-д','п-к','пл','платф','пл-ка','порт','пр-д','пр-к','пр-ка','пр-кт','пр-лок',
+    'промзона','проул','рзд','р-н','с','сад','с-к','сквер','сл','снт','с-р','ст','стр','тер','тер','тер ГСК','тер ДНО',
+    'тер ДНП','тер ДНТ','тер ДПК','тер ОНО','тер ОНП','тер ОНТ','тер ОПК','тер СНО','тер СНП','тер СНТ','тер СПК',
+    'тер ТСН','тер СОСН','тер ф х','тракт','туп','ул','ус','ф/х','х','ш','ю','з/у','гск','днп','местность','мкр','н/п',
+    'промзона','сад','снт','тер','ф/х','а/я','аал','аллея','арбан','аул','берег','б-р','вал','въезд','высел','г-к',
+    'гск','д','дор','ж/д_будка','ж/д_казарм','ж/д_оп','ж/д_платф','ж/д_пост','ж/д_рзд','ж/д_ст','жт','заезд','зона',
+    'казарма','кв-л','км','кольцо','коса','линия','м','мкр','мост','наб','нп','остров','п','п/о','п/р','п/ст','парк',
+    'пер','переезд','пл','платф','пл-ка','починок','пр-кт','проезд','просек','просека','проселок','проулок','рзд',
+    'ряды','с','сад','сквер','сл','снт','спуск','ст','стр','тер','тракт','туп','ул','уч-к','ферма','х','ш'
+]
 
 q1 = """
 'обл': 'REG_TYPES', 'о': 'REG_TYPES', 'область': 'REG_TYPES', 'респ': 'REG_TYPES', 'республика': 'REG_TYPES', 'край': 'REG_TYPES', 'кр': 'REG_TYPES', 'ар': 'REG_TYPES', 'ао': 'REG_TYPES', 'авт окр': 'REG_TYPES', 'автономный округ': 'REG_TYPES', 'авт обл': 'REG_TYPES', 'автономная область': 'REG_TYPES', 'город федерального значения': 'REG_TYPES', 'гфз': 'REG_TYPES',
@@ -276,6 +304,7 @@ DIR4MOVE = '/home/da3/Move/'
 DIR4IMPORT = '/home/da3/CheckLoad/'
 DIR4CFGIMPORT = '/home/da3/CheckLoad/cfg/'
 DIR4PCHECK = '/home/da3/PasportChecks/'
+
 
 class MainWindowSlots(Ui_Form):   # Определяем функции, которые будем вызывать в слотах
 
@@ -2655,6 +2684,9 @@ class FullAdress(BaseClass):
     def __init__(self, field='', tip='по типам субъектов'):
     #def __init__(self, field='', tip='стандартный'):
         self.field = str(field)
+        self.field_home = ''
+        self.homes = []
+        self.index = []
         self.tip = tip
         self.full_adress = []
         self.FULL_ADRESS_DICT = {}
@@ -2670,7 +2702,7 @@ class FullAdress(BaseClass):
                 n = []
                 word = word.strip()
                 if i == 0:
-                    n = [char for char in word if char in string.digits]
+                    n = [char for char in word if char in digits]
                     if len(n) != 6:
                         return NEW_NULL_VALUE_FOR_INDEX
                     self.FULL_ADRESS_DICT[FULL_ADRESS_LABELS[0]] = ''.join(n)
@@ -2706,6 +2738,189 @@ class FullAdress(BaseClass):
             self.full_adress.append(self.FULL_ADRESS_DICT[label].upper())
         return self.full_adress
 
+    def cut_adress(self):
+        self.field = self.field.lower()
+        # Заменить разделители на пробелы, схлопнуть двойные пробелы в одинарные
+        field_cut = self.field
+        for cut in SPLIT_FIELDS:
+            field_cut = field_cut.replace(cut, ' ')
+        while field_cut.find('  ') > -1:
+            field_cut = field_cut.replace('  ', ' ')
+        words = field_cut.split()
+        # разделяем дома и деревни
+        field_cut = ''
+        for i, word in enumerate(words):
+            if word == 'д':
+                is_willage = True
+                for char in words[i + 1]:
+                    if char in digits:
+                        is_willage = False
+                        break
+                if is_willage:
+                    words[i] = 'дер'
+            field_cut += words[i] + ' '
+
+        self.field = field_cut.strip()
+        field_cut = ''
+        breaks = {}
+        breaks_len = {}
+        breaks_name = {}
+        for adress_type in ADRESS_TYPES:
+            for left in SPLIT_FIELDS:
+                for right in SPLIT_FIELDS:
+                    if len(self.field.split(left + adress_type + right)) > 1:
+                        try:
+                            tek_pos = 0
+                            for i, tek_part in enumerate(self.field.split(left + adress_type + right)):
+                                if i == len(self.field.split(left + adress_type + right)) - 1:
+                                    break
+                                tek_pos += len(tek_part) + len(left + adress_type + right)
+                                breaks[ADRESS_TYPES[adress_type]].append(tek_pos)
+                        except KeyError:
+                            breaks[ADRESS_TYPES[adress_type]] = []
+                            tek_pos = 0
+                            for i, tek_part in enumerate(self.field.split(left + adress_type + right)):
+                                if i == len(self.field.split(left + adress_type + right)) - 1:
+                                    break
+                                tek_pos += len(tek_part) + len(left + adress_type + right)
+                                breaks[ADRESS_TYPES[adress_type]].append(tek_pos)
+                        try:
+                            for i, tek_part in enumerate(self.field.split(left + adress_type + right)):
+                                if i == len(self.field.split(left + adress_type + right)) - 1:
+                                    break
+                                breaks_name[ADRESS_TYPES[adress_type]].append(adress_type)
+                        except KeyError:
+                            breaks_name[ADRESS_TYPES[adress_type]] = []
+                            for i, tek_part in enumerate(self.field.split(left + adress_type + right)):
+                                if i == len(self.field.split(left + adress_type + right)) - 1:
+                                    break
+                                breaks_name[ADRESS_TYPES[adress_type]].append(adress_type)
+
+        digits_count = 0
+        digits_pos = 0
+        index_pos = -1
+        for i, char in enumerate(self.field):
+            if char in digits:
+                if i - digits_pos > 1 or digits_count > 6:
+                    digits_count = 1
+                else:
+                    digits_count += 1
+                digits_pos = i
+                if digits_count == 6:
+                    index_pos = i - 5
+                    try:
+                        breaks[0].append(index_pos)
+                    except KeyError:
+                        breaks[0] = []
+                        breaks[0].append(index_pos)
+                    try:
+                        breaks_len[0].append(6)
+                    except KeyError:
+                        breaks_len[0] = []
+                        breaks_len[0].append(6)
+                    try:
+                        breaks_name[0].append('')
+                    except KeyError:
+                        breaks_name[0] = []
+                        breaks_name[0].append('')
+
+        # сортируем по значениям словаря
+        breaks_sorted = OrderedDict(sorted(breaks.items(), key=lambda t: t[1]))
+
+        # Отсечь дом-корпус-квартиру
+        cutted_begin = []
+        cutted_end = []
+        home_cut = 0
+        home_pass = 0
+        tek_home = ''
+        last_i = 0
+        for i in range(5):
+            #last_break_sorted = list(breaks_sorted.keys())[0]
+            for break_sorted in breaks_sorted:
+                if break_sorted == 0 and len(breaks_sorted[break_sorted]) > i: # индекс
+                    try:
+                        if home_cut: # дом-корпус-квартира (окончание)
+                            cutted_end.append(breaks_sorted[break_sorted][i])
+                            tek_home += ', ' + self.field[home_pass:breaks_sorted[break_sorted][i]].strip()
+                            home_cut = 0
+                            self.homes.append(tek_home)
+                            tek_home = ''
+                            #self.homes.append(self.field[cutted_begin[len(cutted_begin) - 1]:
+                            #                             cutted_end[len(cutted_end) - 1]].strip())
+                        cutted_begin.append(breaks_sorted[break_sorted][i])
+                        cutted_end.append(breaks_sorted[break_sorted][i] + breaks_len[break_sorted][i])
+                        self.index.append(self.field[breaks_sorted[break_sorted][i]:breaks_sorted[break_sorted][i] +
+                                                                                    breaks_len[break_sorted][i]])
+                        last_break_sorted = break_sorted
+                    except IndexError:
+                        pass
+                elif break_sorted == 11 and len(breaks_sorted[break_sorted]) > i: # дом-корпус-квартира (начало)
+                    try:
+                        cutted_begin.append(breaks_sorted[break_sorted][i] - len(breaks_name[break_sorted][i]) - 1)
+                        home_cut = breaks_sorted[break_sorted][i]
+                        home_pass = breaks_sorted[break_sorted][i] - len(breaks_name[break_sorted][i]) - 1
+                        last_break_sorted = break_sorted
+                    except IndexError:
+                        pass
+                elif break_sorted > 11 and len(breaks_sorted[break_sorted]) > i:
+                    if home_cut:
+                        try:
+                            tek_home += ', ' + self.field[home_pass:breaks_sorted[break_sorted][i]].strip(
+                                               )[:-len(breaks_name[break_sorted][i])].strip()
+                            home_pass = breaks_sorted[break_sorted][i] - len(breaks_name[break_sorted][i]) - 1
+                        except IndexError:
+                            pass
+                    last_break_sorted = break_sorted
+                elif break_sorted < 11 and len(breaks_sorted[break_sorted]) > i: # дом-корпус-квартира (окончание)
+                    if home_cut:
+                        try:
+                            cutted_end.append(breaks_sorted[last_break_sorted][last_i] + len(tek_part))
+                            tek_home += ', ' + self.field[home_pass:breaks_sorted[last_break_sorted][last_i] + len(tek_part)].strip()
+                            home_cut = 0
+                            self.homes.append(tek_home)
+                            tek_home = ''
+                        except IndexError:
+                            pass
+                    last_break_sorted = break_sorted
+            last_i = i
+        if len(cutted_begin) != len(cutted_end):
+            cutted_end.append(len(self.field))
+            tek_home += ', ' + self.field[home_pass:].strip()
+            home_cut = 0
+            self.homes.append(tek_home)
+
+            #self.homes.append(self.field[cutted_begin[len(cutted_begin) - 1]:cutted_end[len(cutted_end) - 1]].strip())
+
+        # удалить индекс, дом-корпус-квартиру
+        field_cut = ''
+        if len(cutted_begin):
+            field_cut = self.field[:cutted_begin[0]]
+            for i, cutted in enumerate(cutted_begin):
+                if i:
+                    field_cut += self.field[cutted_end[i-1]:cutted]
+
+        # Заменить разделители на пробелы, схлопнуть двойные пробелы в одинарные
+        for cut in SPLIT_FIELDS:
+            field_cut = field_cut.replace(cut, ' ')
+        while field_cut.find('  ') > -1:
+            field_cut = field_cut.replace('  ', ' ')
+
+        # Удалить типы объектов
+        for adress_type in ADRESS_TYPES:
+            field_cut = field_cut.replace(' ' + adress_type + ' ',' ')
+        for adress_type in ALL_CUT_NAMES:
+            field_cut = field_cut.replace(' ' + adress_type + ' ', ' ')
+        while field_cut.find('  ') > -1:
+            field_cut = field_cut.replace('  ', ' ')
+
+        # Удалить дублирующиеся слова
+        words = field_cut.split()
+        field_cut = ''
+        for word in words:
+            if word not in field_cut.split():
+                field_cut += word + ' '
+        self.field_home = field_cut
+
     def get_values(self):
         if self.tip == 'стандартный':
             # Когда адрес 414000, г. Астрахань, ул. Такая, д. Т...
@@ -2716,6 +2931,7 @@ class FullAdress(BaseClass):
         elif self.tip == 'перемешаный':
             # Когда все поля по раздельности и перемешаны...
             output_list = []
+
             if len(self.field) != 0 and self.field != NULL_VALUE:
                 self.field = self.field.lower()
                 values = self.field.split(SPLIT_FIELD)
@@ -2725,101 +2941,98 @@ class FullAdress(BaseClass):
                 return output_list
             else:
                 if self.field == NULL_VALUE:
-                    return NEW_NULL_VALUE
+                    return NEW_NULL_VALUE_FOR_ADDRESS
                 else:
-                    return NEW_NULL_VALUE
+                    return NEW_NULL_VALUE_FOR_ADDRESS
         elif self.tip == 'по типам субъектов':
+            # Заменить разделители на пробелы, схлопнуть двойные пробелы в одинарные
+            if self.field == '':
+                return NEW_NULL_VALUE_FOR_ADDRESS
+            field_cut = self.field
+            for cut in SPLIT_FIELDS:
+                field_cut = field_cut.replace(cut, ' ')
+            while field_cut.find('  ') > -1:
+                field_cut = field_cut.replace('  ', ' ')
+            self.field = field_cut
+            all_homes = ''
             output_list = []
-            if len(self.field) != 0 and self.field != NULL_VALUE:
-                self.field = self.field.lower()
-                breaks = {}
-                breaks_len = {}
-                breaks_name = {}
-                for adress_type in ADRESS_TYPES:
-                    for left in SPLIT_FIELDS:
-                        for right in SPLIT_FIELDS:
-                            if len(self.field.split(left + adress_type + right)) > 1:
-                                breaks[ADRESS_TYPES[adress_type]] = self.field.find(left + adress_type + right)
-                                breaks_name[ADRESS_TYPES[adress_type]] = adress_type
-                digits_count = 0
-                digits_pos = 0
-                index_pos = -1
-                for i, char in enumerate(self.field):
-                    if char in digits:
-                        if i - digits_pos > 1 or digits_count > 6:
-                            digits_count = 1
+            breaked_address = False
+            if len(self.field) > 0 and self.field != NULL_VALUE:
+                self.cut_adress()
+                if len(self.homes):
+                    base_home = self.homes[0]
+                    all_homes = self.homes[0]
+                    for home in self.homes:
+                        if home != base_home:
+                            all_homes += home
+                            breaked_address = True
+                if len(self.index):
+                    base_index = self.index[0]
+                    all_index = self.index[0]
+                    for index in self.index:
+                        if index != base_index:
+                            all_index += ', ' + index
+                            breaked_address = True
+                else:
+                    all_index = '111111'
+                try:
+                    res = requests.get('http://127.0.0.1:23332/find/' + self.field_home)
+                except Exception as e:
+                    print('Сервис адресов не запущен')
+                    sys.exit()
+                if res.status_code == 200:
+                    try:
+                        ajson = json.loads(bytes.decode(res.content))
+                        self.field = all_index + ', ' + ajson[0]['text'] + all_homes
+                    except KeyError:
+                        if len(self.index) > 1:
+                            return ['', '', '', '', '', '', '', '', all_index + self.field_home + all_homes, '', '', '',
+                                    '']
                         else:
-                            digits_count += 1
-                        digits_pos = i
-                        if digits_count == 6:
-                            index_pos = i - 5
-
-                if index_pos > -1:
-                    breaks[0] = index_pos + 6
-                    breaks_len[0] = 6
-                    breaks_name[0] = ''
-
-                # сортируем по значениям словаря
-                breaks_sorted = OrderedDict(sorted(breaks.items(), key=lambda t: t[1]))
-                break_sorted_last = -1
-                output_dict = {}
-                for i, break_sorted in enumerate(breaks_sorted):
-                    if break_sorted == 0: # индекс
-                        output_dict[break_sorted] = self.field[breaks_sorted[break_sorted] - breaks_len[break_sorted]:
-                                                               breaks_sorted[break_sorted]]
-                        break_sorted_last = break_sorted
-                        continue
-                    # ищем значение перед типом субъекта
-                    if break_sorted_last == -1:
-                        subject = self.field[:breaks_sorted[break_sorted]]
-                        breaks_len[break_sorted] = len(breaks_name[break_sorted_last])
-                    else:
-                        subject = self.field[breaks_sorted[break_sorted_last] + len(breaks_name[break_sorted_last]) + 1:
-                                             breaks_sorted[break_sorted]]
-                        breaks_len[break_sorted] = len(breaks_name[break_sorted])
-                    for j in range(5):  # тщательно обрезаем разделительные символы с концов строки
-                        for split_field in SPLIT_FIELDS:
-                            subject = subject.strip(split_field)
-                    if len(subject):    # что-нибудь осталось?
-                        output_dict[break_sorted] = subject
-                    else:               # не осталось - ищем значение после типа субъекта
+                            return [all_index,'','','','','','','', self.field_home + all_homes,'','','','']
+                    except IndexError:
+                        if len(self.index) > 1:
+                            return ['', '', '', '', '', '', '', '', all_index + self.field_home + all_homes, '', '', '',
+                                    '']
+                        else:
+                            return [all_index,'','','','','','','', self.field_home + all_homes,'','','','']
+                    address_dict = {}
+                    address_words = self.field.split(',')
+                    # разделяем дома и деревни
+                    field_cut = ''
+                    for i, word in enumerate(address_words):
+                        if word.find(' д ') > -1:
+                            is_willage = True
+                            for char in address_words[i].replace(' д ',''):
+                                if char in digits:
+                                    is_willage = False
+                                    break
+                            if is_willage:
+                                address_words[i] = address_words[i].replace(' д ',' дер ')
+                        field_cut += address_words[i] + ', '
+                    address_words = field_cut.split(',')
+                    for address_word in address_words:
+                        for address_type in ADRESS_TYPES:
+                            if address_word.find(' ' + address_type + ' ') > -1:
+                                address_dict[ADRESS_TYPES[address_type]] = address_word.replace(' ' + address_type +
+                                                                                                        ' ', '').strip()
+                                if ADRESS_TYPES[address_type] and ADRESS_TYPES[address_type] < 10:
+                                    address_dict[ADRESS_TYPES[address_type] + 1] = address_type
+                    address_words = []
+                    for i, address_word in enumerate(FULL_ADRESS_LABELS):
+                        if not i:
+                            address_words.append(all_index)
+                            continue
                         try:
-                            subject = self.field[breaks_sorted[break_sorted] + len(breaks_name[break_sorted]) + 1
-                                                           :breaks_sorted[list(breaks_sorted.keys())[i + 1]]]
-                        except IndexError:
-                            subject = self.field[breaks_sorted[break_sorted] + len(breaks_name[break_sorted]) + 1:]
-                        for j in range(5):
-                            for split_field in SPLIT_FIELDS:
-                                subject = subject.strip(split_field)
-                        if len(subject):
-                            output_dict[break_sorted] = subject
-                            breaks_len[break_sorted] = len(subject)
-                    break_sorted_last = break_sorted
-                    if break_sorted == 11:  # дом - нет типа субъекта
-                        pass
-                    elif break_sorted == 12:  # корпус - нет типа субъекта
-                        pass
-                    elif break_sorted == 13:  # квартира - нет типа субъекта
-                        pass
-                    else: # у остальных есть тип субъекта
-                        pass
-
-
-                # записываем пустые строки если не нашли такую позицию
-                for i in range(13):
-                    if i in output_dict.keys():
-                        output_list.append(output_dict[i])
+                            address_words.append(address_dict[i])
+                        except KeyError:
+                            address_words.append('')
+                    return address_words
+                else:
+                    if len(self.index) > 1:
+                        return ['', '', '', '', '', '', '', '', all_index + self.field_home + all_homes, '', '', '', '']
                     else:
-                        output_list.append('')
-
-                pass
-
-
-
-# def __call__(self, *args, **kwargs):
-#     return self.create_output_list()
-# f = FullAdress('123592, Москва г, строгинский бульвар, д. 26, корпус 2, кв. 425')
-# print(f.get_values())
+                        return [all_index, '', '', '', '', '', '', '', self.field_home + all_homes, '', '', '', '']
 
 
 class Phone(BaseClass):
