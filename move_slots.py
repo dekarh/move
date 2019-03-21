@@ -19,6 +19,8 @@ utc=pytz.UTC
 
 import openpyxl
 from openpyxl import Workbook
+import requests, json
+
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QDate, QDateTime, QSize, Qt, QByteArray, QTimer, QUrl, QThread
@@ -2750,6 +2752,8 @@ class FullAdress(BaseClass):
         # разделяем дома и деревни
         field_cut = ''
         for i, word in enumerate(words):
+            if i > len(words) - 3:
+                break
             if word == 'д':
                 is_willage = True
                 for char in words[i + 1]:
@@ -2758,8 +2762,7 @@ class FullAdress(BaseClass):
                         break
                 if is_willage:
                     words[i] = 'дер'
-            field_cut += words[i] + ' '
-
+        field_cut = ' '.join(words)
         self.field = field_cut.strip()
         field_cut = ''
         breaks = {}
