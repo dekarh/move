@@ -2430,21 +2430,25 @@ def normalize_snils(snils):
 
 
 def field2fio(field):
+    first_name, second_name, third_name = NEW_NULL_VALUE_FOR_ALL_TEXT, NEW_NULL_VALUE_FOR_ALL_TEXT, \
+                                          NEW_NULL_VALUE_FOR_ALL_TEXT
     if len(field) > 0 and field != NULL_VALUE:
-        first_name, second_name, third_name = '', '', ''
-        field = field.strip().replace('  ',' ').replace('  ',' ').split(' ')
-        for i, word in enumerate(field):
+        while field.find('  ') > -1:
+            field = field.replace('  ', ' ')
+        words = field.split()
+        for i, word in enumerate(words):
             if i == 0:
-                first_name = field[i]
+                first_name = words[i]
             elif i == 1:
-                second_name = field[i]
+                second_name = words[i]
+            elif i == 2:
+                third_name = words[i]
             else:
-                third_name += field[i] + ' '
-        if len(third_name) > 0:
-            third_name = third_name[:-1]
-        return first_name, second_name, third_name
-    else:
-        return NEW_NULL_VALUE_FOR_ALL_TEXT
+                third_name += ' ' + words[i]
+        third_name = third_name.strip()
+    return first_name, second_name, third_name
+
+
 
 def field2addr(field):
     addr_name, addr_type = '', ''
