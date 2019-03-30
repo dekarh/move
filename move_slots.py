@@ -681,7 +681,29 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Убрать флаг "Архивный"', 'выбрано'])
         else:
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Убрать флаг "Архивный"', 'не выбрано'])
+        if self.chbNoDubPhonePartner.isChecked():
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Без дублей телефонов у партнера', 'выбрано'])
+        else:
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Без дублей телефонов у партнера', 'не выбрано'])
 
+        # Список телефонов у партнера в фонде в который переносим
+        phones = []
+        if self.chbNoDubPhonePartner.isChecked() and self.leAgent.isEnabled():
+            dbconn = MySQLConnection(**self.dbconfig)
+            cursor = dbconn.cursor()
+            partner = cursor.execute('SELECT partner_code FROM offices_staff WHERE code = %s',
+                                     (self.agent_ids[self.cmbAgent.currentIndex()],))
+            cursor = dbconn.cursor()
+            sql_tel = 'SELECT phone_personal_mobile FROM clients AS cl LEFT JOIN offices_staff AS os ' \
+                      'ON cl.inserted_user_code = s.code WHERE s.partner_code = %s'
+            if self.leFond.isEnabled():
+                phones_sql = cursor.execute(sql_tel +' AND cl.subdomain_id = %s',
+                         (self.agent_ids[self.cmbAgent.currentIndex()], self.fond_ids[self.cmbFond.currentIndex()]))
+            else:
+                phones_sql = cursor.execute(sql_tel, (self.agent_ids[self.cmbAgent.currentIndex()],))
+            for phone_sql in phones_sql:
+                if phone_sql[0] not in phones:
+                    phones.append(phone_sql[0])
         ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Формируем запросы:'])
         sql_cl = 'UPDATE clients AS cl SET'
         sql_co = 'UPDATE contracts AS co SET'
@@ -731,7 +753,15 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         self.progressBar.setMaximum(len(self.clients_ids)-1)
         dbconn = MySQLConnection(**self.dbconfig)
         cursor = dbconn.cursor()
+        cursor_phones = dbconn.cursor()
+        i_tek = 0
         for i, client_id in enumerate(self.clients_ids):
+            if len(phones):
+                cursor_phones.execute('SELECT phone_personal_mobile FROM clients AS cl WHERE cl.client_id = %s',
+                                      (client_id,))
+                rows = cursor_phones.fetchall()
+                if rows[0][0] in phones:
+                    continue
             tuple_client = tuple()
             tuple_contract = tuple()
             if self.leAgent.isEnabled():
@@ -758,7 +788,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             tuple_client += (client_id,)
             tuples_clients.append(tuple_client)
             tuples_contracts.append(tuple_contract)
-            if i and not (i % 1000):
+            if i_tek and not (i_tek % 1000):
                 self.progressBar.setValue(i)
                 if self.leSQLcl.text():
                     cursor.executemany(self.leSQLcl.text(), tuples_clients)
@@ -768,6 +798,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                     cursor.executemany(self.leSQLco.text(), tuples_contracts)
                     dbconn.commit()
                     tuples_contracts = []
+            i_tek += 1
         if self.leSQLcl.text():
             ws_log.append([datetime.now().strftime("%H:%M:%S"), self.leSQLcl.text()])
             ws_log.append([datetime.now().strftime("%H:%M:%S")] + list(tuples_clients[0]))

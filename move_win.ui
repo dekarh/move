@@ -667,6 +667,13 @@
                  </property>
                 </widget>
                </item>
+               <item>
+                <widget class="QCheckBox" name="chbNoDubPhonePartner">
+                 <property name="text">
+                  <string>Без дублей телефонов у партнера</string>
+                 </property>
+                </widget>
+               </item>
               </layout>
              </widget>
             </item>
