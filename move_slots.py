@@ -312,6 +312,8 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
 
     def setupUi(self, form):
         Ui_Form.setupUi(self,form)
+        self.partner = 0
+        self.phones = []
         self.passports = {}
         self.tableWidget.setColumnCount(2)
         self.tableWidget.setHorizontalHeaderLabels(('Результат', 'Исходник'))
@@ -687,23 +689,32 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Без дублей телефонов у партнера', 'не выбрано'])
 
         # Список телефонов у партнера в фонде в который переносим
-        phones = []
         if self.chbNoDubPhonePartner.isChecked() and self.leAgent.isEnabled():
             dbconn = MySQLConnection(**self.dbconfig)
             cursor = dbconn.cursor()
-            partner = cursor.execute('SELECT partner_code FROM offices_staff WHERE code = %s',
-                                     (self.agent_ids[self.cmbAgent.currentIndex()],))
-            cursor = dbconn.cursor()
-            sql_tel = 'SELECT phone_personal_mobile FROM clients AS cl LEFT JOIN offices_staff AS os ' \
-                      'ON cl.inserted_user_code = s.code WHERE s.partner_code = %s'
-            if self.leFond.isEnabled():
-                phones_sql = cursor.execute(sql_tel +' AND cl.subdomain_id = %s',
-                         (self.agent_ids[self.cmbAgent.currentIndex()], self.fond_ids[self.cmbFond.currentIndex()]))
-            else:
-                phones_sql = cursor.execute(sql_tel, (self.agent_ids[self.cmbAgent.currentIndex()],))
-            for phone_sql in phones_sql:
-                if phone_sql[0] not in phones:
-                    phones.append(phone_sql[0])
+            cursor.execute('SELECT partner_code FROM offices_staff WHERE code = %s',
+                           (self.agent_ids[self.cmbAgent.currentIndex()],))
+            partner = cursor.fetchall()
+            if self.partner != partner[0][0]:
+                phones = []
+                cursor = dbconn.cursor()
+                sql_tel = 'SELECT phone_personal_mobile FROM clients AS cl LEFT JOIN offices_staff AS os ' \
+                          'ON cl.inserted_user_code = os.code WHERE os.partner_code = %s'
+                if self.leFond.isEnabled():
+                    cursor.execute(sql_tel +' AND cl.subdomain_id = %s', (partner[0][0],
+                                                                          self.fond_ids[self.cmbFond.currentIndex()]))
+                else:
+                    cursor.execute(sql_tel, (partner[0][0],))
+                phones_sql = cursor.fetchall()
+                self.progressBar.setMaximum(len(phones_sql) - 1)
+                for i, phone_sql in enumerate(phones_sql):
+                    if not (i % 10000):
+                        self.progressBar.setValue(i)
+                    if phone_sql[0] and phone_sql[0] not in phones:
+                        phones.append(phone_sql[0])
+                    if i > 10000:
+                        break
+                self.phones = phones
         ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Формируем запросы:'])
         sql_cl = 'UPDATE clients AS cl SET'
         sql_co = 'UPDATE contracts AS co SET'
@@ -755,12 +766,16 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         cursor = dbconn.cursor()
         cursor_phones = dbconn.cursor()
         i_tek = 0
+        if len(self.phones):
+            ws_phones_doubles = wb_log.create_sheet('Дубли телефонов у партнера')
+            ws_phones_doubles.append(['client_id', 'СНИЛС', 'телефон'])
         for i, client_id in enumerate(self.clients_ids):
-            if len(phones):
-                cursor_phones.execute('SELECT phone_personal_mobile FROM clients AS cl WHERE cl.client_id = %s',
+            if len(self.phones):
+                cursor_phones.execute('SELECT phone_personal_mobile, number FROM clients AS cl WHERE cl.client_id = %s',
                                       (client_id,))
                 rows = cursor_phones.fetchall()
-                if rows[0][0] in phones:
+                if rows[0][0] in self.phones:
+                    ws_phones_doubles.append([client_id, rows[0][1], rows[0][0]])
                     continue
             tuple_client = tuple()
             tuple_contract = tuple()
@@ -805,7 +820,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             if len(tuples_clients):
                 cursor.executemany(self.leSQLcl.text(),tuples_clients)
                 dbconn.commit()
-            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'update отработал'])
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'update clients отработал'])
         else:
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'clients - нет запроса'])
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'clients - нет данных'])
@@ -816,7 +831,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             if len(tuples_contracts):
                 cursor.executemany(self.leSQLco.text(),tuples_contracts)
                 dbconn.commit()
-            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'update отработал'])
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'update contracts отработал'])
         else:
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'contracts - нет запроса'])
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'contracts - нет данных'])
