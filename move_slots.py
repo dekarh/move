@@ -617,7 +617,6 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         else:
             ws_log.append([datetime.now().strftime("%H:%M:%S"), ' В исходной таблице нет дублей'])
 
-
         if not self.chbNoBackup.isChecked():
             ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Дублируем исходную excel таблицу в этот файл'])
             ws_input = wb_log.create_sheet('Исходная таблица')
@@ -696,6 +695,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                            (self.agent_ids[self.cmbAgent.currentIndex()],))
             partner = cursor.fetchall()
             if self.partner != partner[0][0]:
+                self.partner = partner[0][0]
                 phones = []
                 cursor = dbconn.cursor()
                 sql_tel = 'SELECT phone_personal_mobile FROM clients AS cl LEFT JOIN offices_staff AS os ' \
@@ -712,8 +712,8 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                         self.progressBar.setValue(i)
                     if phone_sql[0] and phone_sql[0] not in phones:
                         phones.append(phone_sql[0])
-                    if i > 10000:
-                        break
+                    #if i > 10000:
+                    #    break
                 self.phones = phones
         ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Формируем запросы:'])
         sql_cl = 'UPDATE clients AS cl SET'
