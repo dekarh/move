@@ -580,6 +580,8 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                 cmd += ' -arhivOFF True'
             if self.chbNoDubPhonePartner.isChecked():
                 cmd += ' -noDubPhonePartner True'
+            if self.chbNoBackup.isChecked():
+                cmd += ' -noBackup True'
             self.leSQLcl.setText(cmd)
             self.leSQLco.setText(cmd)
             return

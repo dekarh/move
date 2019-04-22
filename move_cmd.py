@@ -19,6 +19,7 @@ class my(object):
         self.dbconfig = read_config(filename='move.ini', section='mysql')
         self.leSQLcl = ''
         self.leSQLco = ''
+        self.phones = []
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument('-sheetName')
         self.parser.add_argument('-fond', default=0, type=int)
@@ -32,6 +33,7 @@ class my(object):
         self.parser.add_argument('-arhivON', default=False, type=bool)
         self.parser.add_argument('-arhivOFF', default=False, type=bool)
         self.parser.add_argument('-noDubPhonePartner', default=False, type=bool)
+        self.parser.add_argument('-noBackup', default=False, type=bool)
         self.args = self.parser.parse_args(sys.argv[2:])
 
     def one(self):
@@ -318,11 +320,11 @@ class my(object):
                 sql_co += ','
             sql_co += ' co.external_status_code = %s, co.external_status_secure_code = %s,' \
                       ' co.external_status_callcenter_code = %s'
-        if self.args.ourStat.isChecked():
+        if self.args.ourStat:
             if sql_co[len(sql_co) - 2:] == '%s':
                 sql_co += ','
             sql_co += ' co.status_code = %s, co.status_secure_code = %s, co.status_callcenter_code = %s'
-        if self.args.suff.isChecked():
+        if self.args.suff:
             if sql_co[len(sql_co) - 2:] == '%s':
                 sql_co += ','
             sql_co += ' co.partner_remote_id = %s'
