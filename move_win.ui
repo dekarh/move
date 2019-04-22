@@ -674,6 +674,13 @@
                  </property>
                 </widget>
                </item>
+               <item>
+                <widget class="QCheckBox" name="chbServerString">
+                 <property name="text">
+                  <string>Строка для сервера</string>
+                 </property>
+                </widget>
+               </item>
               </layout>
              </widget>
             </item>
