@@ -554,7 +554,37 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         if self.leSigner.isEnabled() and not self.signer_touched:
             self.frSigner.setStyleSheet("QFrame{background-image: url(./x.png)}")
             return
-                                                                # Создаем файл с исходными данными и логом
+
+        if self.chbServerString.isChecked():
+            cmd = 'python3 move_cmd.py ' + (self.leDir.text() + self.cmbFile.currentText()).replace(' ','\ ') \
+                  +' -sheetName ' + self.cmbTab.currentText().replace(' ', '\ ')
+            if self.leFond.isEnabled():
+                cmd += ' -fond ' + str(self.fond_ids[self.cmbFond.currentIndex()])
+            if self.leAgent.isEnabled():
+                cmd += ' -agent ' + str(self.agent_ids[self.cmbAgent.currentIndex()])
+            if self.leSigner.isEnabled():
+                cmd += ' -signer ' + str(self.signer_ids[self.cmbSigner.currentIndex()])
+            if self.chbClientOnly.isChecked():
+                cmd += ' -clientOnly True'
+            if self.chbSocium.isChecked():
+                cmd += ' -socium True'
+            if self.chbSuff.isChecked():
+                cmd += ' -suff ' + self.leSuff.text()
+            if self.chbOurStat.isChecked():
+                cmd += ' -ourStat True'
+            if self.chbFondStat.isChecked():
+                cmd += ' -fondStat True'
+            if self.chbArhivON.isChecked():
+                cmd += ' -arhivON True'
+            if self.chbArhivOFF.isChecked():
+                cmd += ' -arhivOFF True'
+            if self.chbNoDubPhonePartner.isChecked():
+                cmd += ' -noDubPhonePartner True'
+            self.leSQLcl.setText(cmd)
+            self.leSQLco.setText(cmd)
+            return
+
+        # Создаем файл с исходными данными и логом
         wb_log = openpyxl.Workbook(write_only=True)
 
         ws_log = wb_log.create_sheet('Лог')

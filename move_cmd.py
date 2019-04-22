@@ -14,29 +14,25 @@ IN_NAMES = ['ID', 'СНИЛС', 'СТРАХОВОЙ_НОМЕР', 'СТРАХОВ
 DIR4MOVE = '/home/lekarh/Move/'
 
 
-def createParser ():
-    parser = argparse.ArgumentParser()
-    parser.add_argument ('-sheetName')
-    parser.add_argument ('-fond', default=0, type=int)
-    parser.add_argument ('-agent', default=0, type=int)
-    parser.add_argument ('-signer', default=0, type=int)
-    parser.add_argument ('-clientOnly', default=False, type=bool)
-    parser.add_argument ('-socium', default=False, type=bool)
-    parser.add_argument ('-suff', default='', type=str)
-    parser.add_argument ('-ourStat', default=False, type=bool)
-    parser.add_argument ('-fondStat', default=False, type=bool)
-    parser.add_argument ('-arhivON', default=False, type=bool)
-    parser.add_argument ('-arhivOFF', default=False, type=bool)
-    parser.add_argument ('-noDubPhonePartner', default=False, type=bool)
-
-
 class my(object):
     def __init__(self):
-        parser = createParser()
-        self.args = parser.parse_args(sys.argv[2:])
         self.dbconfig = read_config(filename='move.ini', section='mysql')
         self.leSQLcl = ''
         self.leSQLco = ''
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument('-sheetName')
+        self.parser.add_argument('-fond', default=0, type=int)
+        self.parser.add_argument('-agent', default=0, type=int)
+        self.parser.add_argument('-signer', default=0, type=int)
+        self.parser.add_argument('-clientOnly', default=False, type=bool)
+        self.parser.add_argument('-socium', default=False, type=bool)
+        self.parser.add_argument('-suff', default='', type=str)
+        self.parser.add_argument('-ourStat', default=False, type=bool)
+        self.parser.add_argument('-fondStat', default=False, type=bool)
+        self.parser.add_argument('-arhivON', default=False, type=bool)
+        self.parser.add_argument('-arhivOFF', default=False, type=bool)
+        self.parser.add_argument('-noDubPhonePartner', default=False, type=bool)
+        self.args = self.parser.parse_args(sys.argv[2:])
 
     def one(self):
         # ФИО агента
@@ -390,6 +386,7 @@ class my(object):
                     cursor.executemany(self.leSQLco, tuples_contracts)
                     dbconn.commit()
                     tuples_contracts = []
+                print(datetime.now().strftime("%H:%M:%S"),'обработано', i_tek, 'записей')
             i_tek += 1
         if self.leSQLcl:
             ws_log.append([datetime.now().strftime("%H:%M:%S"), self.leSQLcl])
