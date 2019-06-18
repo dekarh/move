@@ -346,6 +346,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         self.table = []
         self.twParsingResult.hide()
         self.cmbGenderType.addItems(['М или Ж', '0 или 1', 'Мужской или Женский'])
+        self.cmbParsingType.addItems(['стандартный', 'перемешаный', 'КЛАДР'])
         self.refresh()
         dbconfig = read_config(filename='move.ini', section='mysql')
         dbconn = MySQLConnection(**dbconfig)
@@ -1731,7 +1732,8 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         self.workerThread = WorkerThread(sheet=self.sheet, tableWidget=self.tableWidget,
                                          fname=self.file_name, agent=self.agent_ids[self.cmbAgent.currentIndex()],
                                          signer=self.signer_ids[self.cmbSigner.currentIndex()],
-                                         cmbGenderType=self.cmbGenderType)  # <<<<<<<<<<<<<<<<<<<<<<<<<запускаем подпроцесс
+                                         cmbGenderType=self.cmbGenderType, cmbParsingType=self.cmbParsingType)
+                                                                        # <<<<<<<<<<<<<<<<<<<<<<<<<запускаем подпроцесс
         self.workerThread.progress_value.connect(self.updateProgressBar)
         self.workerThread.start()
         self.updateProgressBar(0)
@@ -1853,7 +1855,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                             result_row[lab[j]] = addr[j]
                     elif label0 == "Адрес регистрации из_поля":
                         result_row[ADRESS_REG_LABELS[0]] = '111111'
-                        adress_reg = FullAdress(row_item)
+                        adress_reg = FullAdress(row_item, tip=self.cmbParsingType.currentText())
                         #                        qr = ''
                         for z, cell in enumerate(adress_reg.get_values()):
                             result_row[ADRESS_REG_LABELS[z]] = cell
@@ -1865,7 +1867,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
 
                     elif label0 == "Адрес проживания из поля":
                         result_row[ADRESS_LIVE_LABELS[0]] = '111111'
-                        adress_zhit = FullAdress(row_item)
+                        adress_zhit = FullAdress(row_item, tip=self.cmbParsingType.currentText())
                         #                        qr = ''
                         for z, cell in enumerate(adress_zhit.get_values()):
                             result_row[ADRESS_LIVE_LABELS[z]] = cell
@@ -2057,7 +2059,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
 class WorkerThread(QThread):
     progress_value = QtCore.pyqtSignal(int)
 
-    def __init__(self, tableWidget, sheet, fname, agent, signer, parent=None, cmbGenderType=None):
+    def __init__(self, tableWidget, sheet, fname, agent, signer, parent=None, cmbGenderType=None, cmbParsingType=None):
         super(WorkerThread, self).__init__(parent)
         self.tableWidget = tableWidget
         self.sheet = sheet
@@ -2065,6 +2067,7 @@ class WorkerThread(QThread):
         self.agent_id = agent
         self.signer_id = signer
         self.cmbGenderType = cmbGenderType
+        self.cmbParsingType = cmbParsingType
         dbconfig = read_config(filename='move.ini', section='mysql')
         dbconn = MySQLConnection(**dbconfig)
         dbcursor = dbconn.cursor()
@@ -2249,7 +2252,7 @@ class WorkerThread(QThread):
 
                     elif label0 == "Адрес регистрации из_поля":
                         result_row[ADRESS_REG_LABELS[0]] = '111111'
-                        adress_reg = FullAdress(row_item)
+                        adress_reg = FullAdress(row_item, tip=self.cmbParsingType.currentText())
 #                        qr = ''
                         for z, cell in enumerate(adress_reg.get_values()):
                             result_row[ADRESS_REG_LABELS[z]] = cell
@@ -2261,7 +2264,7 @@ class WorkerThread(QThread):
 
                     elif label0 == "Адрес проживания из поля":
                         result_row[ADRESS_LIVE_LABELS[0]] = '111111'
-                        adress_zhit = FullAdress(row_item)
+                        adress_zhit = FullAdress(row_item, tip=self.cmbParsingType.currentText())
 #                        qr = ''
                         for z, cell in enumerate(adress_zhit.get_values()):
                             result_row[ADRESS_LIVE_LABELS[z]] = cell
@@ -2765,7 +2768,7 @@ def normalize_home(tx):
 
 
 class FullAdress(BaseClass):
-    def __init__(self, field='', tip='по типам субъектов'):
+    def __init__(self, field='', tip='стандартный'):
     #def __init__(self, field='', tip='стандартный'):
         self.field = str(field)
         self.field_home = ''
@@ -3029,7 +3032,7 @@ class FullAdress(BaseClass):
                     return NEW_NULL_VALUE_FOR_ADDRESS
                 else:
                     return NEW_NULL_VALUE_FOR_ADDRESS
-        elif self.tip == 'по типам субъектов':
+        elif self.tip == 'КЛАДР':
             # Заменить разделители на пробелы, схлопнуть двойные пробелы в одинарные
             if self.field == '':
                 return NEW_NULL_VALUE_FOR_ADDRESS

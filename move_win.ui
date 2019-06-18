@@ -694,6 +694,9 @@
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_11">
                <item>
+                <widget class="QComboBox" name="cmbParsingType"/>
+               </item>
+               <item>
                 <widget class="QLabel" name="lbmportInf">
                  <property name="text">
                   <string/>
