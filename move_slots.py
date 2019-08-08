@@ -306,6 +306,7 @@ DIR4MOVE = '/home/da3/Move/'
 DIR4IMPORT = '/home/da3/CheckLoad/'
 DIR4CFGIMPORT = '/home/da3/CheckLoad/cfg/'
 DIR4PCHECK = '/home/da3/PasportChecks/'
+DIR4DELDOUBLESPHONES = '/home/da3/DelDoublesPhones/'
 
 
 class MainWindowSlots(Ui_Form):   # Определяем функции, которые будем вызывать в слотах
@@ -872,6 +873,119 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         wb_log.save(log_name)
         q=0
 
+    def click_pbDelDoubles(self):
+        if not self.file_touched:                               # Проверяем достаточность данных
+            self.frFile.setStyleSheet("QFrame{background-image: url(./x.png)}")
+            return
+        if self.leAgent.isEnabled() and not self.agent_touched:
+            self.frAgent.setStyleSheet("QFrame{background-image: url(./x.png)}")
+            return
+        if self.leFond.isEnabled() and not self.fond_touched:
+            self.frFond.setStyleSheet("QFrame{background-image: url(./x.png)}")
+            return
+        if self.leSigner.isEnabled() and not self.signer_touched:
+            self.frSigner.setStyleSheet("QFrame{background-image: url(./x.png)}")
+            return
+
+        # Создаем файл с исходными данными и логом
+        wb_log = openpyxl.Workbook(write_only=True)
+
+        ws_log = wb_log.create_sheet('Лог')
+        ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Начинаем'])
+
+        log_name = DIR4DELDOUBLESPHONES + datetime.now().strftime('%Y-%m-%d_%H-%M')
+        if self.fond_touched:
+            log_name += 'ф' + str(self.fond_ids[self.cmbFond.currentIndex()])
+        if self.agent_touched:
+            log_name += 'а' + str(self.agent_ids[self.cmbAgent.currentIndex()])
+        log_name += '.xlsx'
+
+        ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Состояние программы:'])
+        ws_log.append([datetime.now().strftime("%H:%M:%S"), 'файл ', self.file_name])
+        if self.leFond.isEnabled():
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'фонд', self.cmbFond.currentText()])
+        else:
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'фонд', 'не выбран'])
+        if self.leAgent.isEnabled():
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'агент', self.cmbAgent.currentText()])
+        else:
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'агент', 'не выбран'])
+        if self.leSigner.isEnabled():
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'подписант', self.cmbSigner.currentText()])
+        else:
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'подписант', 'не выбран'])
+
+        # Список телефонов у партнера в фонде в который переносим
+        dbconn = MySQLConnection(**self.dbconfig)
+        cursor = dbconn.cursor()
+        cursor.execute('SELECT partner_code FROM offices_staff WHERE code = %s',
+                       (self.agent_ids[self.cmbAgent.currentIndex()],))
+        partner = cursor.fetchall()
+        if self.partner != partner[0][0]:
+            self.partner = partner[0][0]
+            phones = []
+            cursor = dbconn.cursor()
+            sql_tel = 'SELECT ca.client_phone FROM saturn_crm.clients AS cl ' \
+                      'LEFT JOIN offices_staff AS os ON cl.inserted_user_code = os.code ' \
+                      'LEFT JOIN contracts AS co ON co.client_id = cl.client_id ' \
+                      'LEFT JOIN callcenter AS ca ON ca.contract_id = co.id ' \
+                      'WHERE os.partner_code = %s GROUP BY ca.client_phone'
+            cursor.execute(sql_tel, (self.partner,))
+            phones_sql = cursor.fetchall()
+            self.progressBar.setMaximum(len(phones_sql) - 1)
+            for i, phone_sql in enumerate(phones_sql):
+                if not (i % 10000):
+                    self.progressBar.setValue(i)
+                if phone_sql[0] and fine_phone(phone_sql[0]) not in phones:
+                    phones.append(fine_phone(phone_sql[0]))
+            self.phones = phones
+        sheet = self.wb[self.wb.sheetnames[self.cmbTab.currentIndex()]]
+        if not sheet.max_row:
+            self.errMessage('Файл Excel некорректно сохранен OpenPyxl. Откройте и пересохраните его')
+            return
+        table = []
+        table_j_end = 0 # Если больше 10 пустых ячеек - на следующую срочку
+        table_k_end = 0 # Если больше 10 пустых строчек - заканчиваем чтение таблицы
+        for j, row in enumerate(sheet.rows):
+            if table_j_end == 10 and j == 10:
+                break
+            table.append([])
+            for k, cell in enumerate(row):
+                table[j].append(cell.value)
+                if cell.value != None:
+                    table_j_end = 0
+                    table_k_end = 0
+                else:
+                    table_j_end += 1
+                    table_k_end += 1
+                if table_k_end > 10:
+                    break
+
+        if not self.chbNoBackup.isChecked():
+            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Дублируем исходную excel таблицу в этот файл'])
+            ws_input = wb_log.create_sheet('Исходная таблица')
+            for table_row in table:
+                row = []
+                for cell in table_row:
+                    row.append(cell)
+                ws_input.append(row)
+
+        table_rez = []
+        for row in table:
+            table_rez.append([])
+            for cell in row:
+                if len(l(cell)) < 10 and len(l(cell)) > 11:
+                    table_rez.append(cell)
+                else:
+                    if fine_phone(l(cell)) in self.phones:
+                        table_rez.append('')
+                    else:
+                        table_rez.append(fine_phone(cell))
+        ws_rez = wb_log.create_sheet('Без телефонных дублей')
+        for row in table_rez:
+            ws_rez.append(row)
+        wb_log.save(log_name)
+
     def change_leAgent(self):
         if self.agent_touched:
             agent_id = self.agent_ids[self.cmbAgent.currentIndex()]
@@ -1078,6 +1192,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             self.frImportInf.hide()
             self.frPasport.hide()
             self.frPasportInf.hide()
+            self.frDelDoublesPhones.hide()
             self.twParsingResult.hide()
         elif self.MoveImportPasport == 2:
             self.frImport.show()
@@ -1086,7 +1201,16 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             self.frMoveInf.hide()
             self.frPasport.hide()
             self.frPasportInf.hide()
+            self.frDelDoublesPhones.hide()
             self.twParsingResult.show()
+        elif self.MoveImportPasport == 4:
+            self.frDelDoublesPhones.show()
+            self.frImportInf.hide()
+            self.frMove.hide()
+            self.frMoveInf.hide()
+            self.frPasport.hide()
+            self.frPasportInf.hide()
+            self.twParsingResult.hide()
         else:
             self.frPasport.show()
             self.frPasportInf.show()
@@ -1094,6 +1218,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             self.frMoveInf.hide()
             self.frImport.hide()
             self.frImportInf.hide()
+            self.frDelDoublesPhones.hide()
             self.twParsingResult.hide()
 
     def click_clbMove(self):
@@ -1105,8 +1230,13 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         self.selectAction()
 
     def click_clbPasport(self):
+        self.MoveImportPasport = 4
+        self.selectAction()
+
+    def click_clbDelDoublesPhones(self):
         self.MoveImportPasport = 1
         self.selectAction()
+
 
     def load4move(self):
         self.sheet = self.wb[self.wb.sheetnames[self.cmbTab.currentIndex()]]
