@@ -391,12 +391,14 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         cursor = dbconn.cursor()
         if self.leAgent.text().strip():
             sql = "SELECT CONCAT_WS(' ', code, '-', user_surname, user_name, user_lastname, '-', position_id), code " \
-                  "FROM offices_staff WHERE user_fired = 0 AND " \
-                  "CONCAT_WS(' ', code, '-', user_surname, user_name, user_lastname, user_lastname) LIKE %s"
+                  "FROM offices_staff " \
+                  "WHERE CONCAT_WS(' ', code, '-', user_surname, user_name, user_lastname, user_lastname) LIKE %s " #\
+                  #"AND user_fired = 0"
             cursor.execute(sql, ('%' + self.leAgent.text() + '%',))
         else:
             sql = "SELECT CONCAT_WS(' ', code, '-', user_surname, user_name, user_lastname, '-', position_id), code " \
-                  "FROM offices_staff WHERE user_fired = 0"
+                  "FROM offices_staff " #\
+                  #"WHERE user_fired = 0"
             cursor.execute(sql)
         rows = cursor.fetchall()
         agents = []
@@ -934,7 +936,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             phones_sql = cursor.fetchall()
             self.progressBar.setMaximum(len(phones_sql) - 1)
             for i, phone_sql in enumerate(phones_sql):
-                if not (i % 10000):
+                if not (i % 100):
                     self.progressBar.setValue(i)
                 if phone_sql[0] and fine_phone(phone_sql[0]) not in phones:
                     phones.append(fine_phone(phone_sql[0]))
@@ -946,7 +948,10 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         table = []
         table_j_end = 0 # Если больше 10 пустых ячеек - на следующую срочку
         table_k_end = 0 # Если больше 10 пустых строчек - заканчиваем чтение таблицы
+        self.progressBar.setMaximum(sheet.max_row - 1)
         for j, row in enumerate(sheet.rows):
+            if not (j % 100):
+                self.progressBar.setValue(j)
             if table_j_end == 10 and j == 10:
                 break
             table.append([])
@@ -969,18 +974,22 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                 for cell in table_row:
                     row.append(cell)
                 ws_input.append(row)
-
+        # Удаляем значение в ячейке если это телефон и он есть у партнера
         table_rez = []
-        for row in table:
+        self.progressBar.setMaximum(len(table) - 1)
+        for j, row in enumerate(table):
+            if not (j % 100):
+                self.progressBar.setValue(j)
             table_rez.append([])
             for cell in row:
-                if len(l(cell)) < 10 and len(l(cell)) > 11:
-                    table_rez.append(cell)
+                if len(str(l(cell))) < 10 or len(str(l(cell))) > 11:
+                    table_rez[j].append(cell)
                 else:
                     if fine_phone(l(cell)) in self.phones:
-                        table_rez.append('')
+                        table_rez[j].append('')
                     else:
-                        table_rez.append(fine_phone(cell))
+                        table_rez[j].append(str(l(fine_phone(cell))))
+        self.progressBar.setValue(len(table) - 1)
         ws_rez = wb_log.create_sheet('Без телефонных дублей')
         for row in table_rez:
             ws_rez.append(row)
@@ -993,12 +1002,14 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         cursor = dbconn.cursor()
         if self.leAgent.text().strip():
             sql = "SELECT CONCAT_WS(' ', code, '-', user_surname, user_name, user_lastname, '-', position_id), code " \
-                  "FROM offices_staff WHERE user_fired = 0 AND " \
-                  "CONCAT_WS(' ', code, '-', user_surname, user_name, user_lastname, user_lastname) LIKE %s"
+                  "FROM offices_staff " \
+                  "WHERE CONCAT_WS(' ', code, '-', user_surname, user_name, user_lastname, user_lastname) LIKE %s " #\
+                  #"AND user_fired = 0 "
             cursor.execute(sql, ('%' + self.leAgent.text() + '%',))
         else:
             sql = "SELECT CONCAT_WS(' ', code, '-', user_surname, user_name, user_lastname, '-', position_id), code " \
-                  "FROM offices_staff WHERE user_fired = 0"
+                  "FROM offices_staff " #\
+                  #"WHERE user_fired = 0"
             cursor.execute(sql)
         rows = cursor.fetchall()
         agents = []
