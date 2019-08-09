@@ -984,16 +984,18 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                 else:
                     if cell2phone in self.phones:
                         table_rez[j].append('')
+                        phone_cells_index.append(k)
                     else:
                         phone_cells_index.append(k)
                         phone_cells.append(format_phone(cell))
-                        table_rez[j].append(format_phone(cell))
+                        table_rez[j].append('')
             phone_cells = sorted(phone_cells, reverse=True)
             i = 0
             for k, cell in enumerate(row):
                 if k in phone_cells_index:
-                    table_rez[j][k] = phone_cells[i]
-                    i += 1
+                    if i < len(phone_cells):
+                        table_rez[j][k] = phone_cells[i]
+                        i += 1
         self.progressBar.setValue(len(table) - 1)
         ws_rez = wb_log.create_sheet('Без телефонных дублей')
         for row in table_rez:
