@@ -314,7 +314,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
     def setupUi(self, form):
         Ui_Form.setupUi(self,form)
         self.partner = 0
-        self.phones = []
+        self.phones = tuple()
         self.passports = {}
         self.tableWidget.setColumnCount(2)
         self.tableWidget.setHorizontalHeaderLabels(('Результат', 'Исходник'))
@@ -732,25 +732,23 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             partner = cursor.fetchall()
             if self.partner != partner[0][0]:
                 self.partner = partner[0][0]
-                phones = []
                 cursor = dbconn.cursor()
-                sql_tel = 'SELECT phone_personal_mobile FROM clients AS cl LEFT JOIN offices_staff AS os ' \
-                          'ON cl.inserted_user_code = os.code WHERE os.partner_code = %s'
-                if self.leFond.isEnabled():
-                    cursor.execute(sql_tel +' AND cl.subdomain_id = %s', (partner[0][0],
-                                                                          self.fond_ids[self.cmbFond.currentIndex()]))
-                else:
-                    cursor.execute(sql_tel, (partner[0][0],))
+                sql_tel = 'SELECT ca.client_phone FROM saturn_crm.clients AS cl ' \
+                          'LEFT JOIN offices_staff AS os ON cl.inserted_user_code = os.code ' \
+                          'LEFT JOIN contracts AS co ON co.client_id = cl.client_id ' \
+                          'LEFT JOIN callcenter AS ca ON ca.contract_id = co.id ' \
+                          'WHERE os.partner_code = %s GROUP BY ca.client_phone'
+                cursor.execute(sql_tel, (self.partner,))
                 phones_sql = cursor.fetchall()
+                phones = []
                 self.progressBar.setMaximum(len(phones_sql) - 1)
                 for i, phone_sql in enumerate(phones_sql):
-                    if not (i % 10000):
+                    if not (i % 1000):
                         self.progressBar.setValue(i)
-                    if phone_sql[0] and phone_sql[0] not in phones:
-                        phones.append(phone_sql[0])
-                    #if i > 10000:
-                    #    break
-                self.phones = phones
+                    phones.append(format_phone(phone_sql[0]))
+                self.phones = tuple(phones)
+            else:
+                self.phones = tuple()
         ws_log.append([datetime.now().strftime("%H:%M:%S"), ' Формируем запросы:'])
         sql_cl = 'UPDATE clients AS cl SET'
         sql_co = 'UPDATE contracts AS co SET'
@@ -810,7 +808,7 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                 cursor_phones.execute('SELECT phone_personal_mobile, number FROM clients AS cl WHERE cl.client_id = %s',
                                       (client_id,))
                 rows = cursor_phones.fetchall()
-                if rows[0][0] in self.phones:
+                if format_phone(rows[0][0]) in self.phones:
                     ws_phones_doubles.append([client_id, rows[0][1], rows[0][0]])
                     continue
             tuple_client = tuple()
@@ -925,7 +923,6 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
         partner = cursor.fetchall()
         if self.partner != partner[0][0]:
             self.partner = partner[0][0]
-            phones = []
             cursor = dbconn.cursor()
             sql_tel = 'SELECT ca.client_phone FROM saturn_crm.clients AS cl ' \
                       'LEFT JOIN offices_staff AS os ON cl.inserted_user_code = os.code ' \
@@ -934,17 +931,20 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                       'WHERE os.partner_code = %s GROUP BY ca.client_phone'
             cursor.execute(sql_tel, (self.partner,))
             phones_sql = cursor.fetchall()
+            phones = []
             self.progressBar.setMaximum(len(phones_sql) - 1)
             for i, phone_sql in enumerate(phones_sql):
-                if not (i % 100):
+                if not (i % 1000):
                     self.progressBar.setValue(i)
-                if phone_sql[0] and fine_phone(phone_sql[0]) not in phones:
-                    phones.append(fine_phone(phone_sql[0]))
-            self.phones = phones
+                if format_phone(phone_sql[0]):
+                    phones.append(format_phone(phone_sql[0]))
+            self.phones = tuple(phones)
         sheet = self.wb[self.wb.sheetnames[self.cmbTab.currentIndex()]]
         if not sheet.max_row:
             self.errMessage('Файл Excel некорректно сохранен OpenPyxl. Откройте и пересохраните его')
             return
+        ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Дублируем исходную excel таблицу в этот файл'])
+        ws_input = wb_log.create_sheet('Исходная таблица')
         table = []
         table_j_end = 0 # Если больше 10 пустых ячеек - на следующую срочку
         table_k_end = 0 # Если больше 10 пустых строчек - заканчиваем чтение таблицы
@@ -965,16 +965,10 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
                     table_k_end += 1
                 if table_k_end > 10:
                     break
+            if not self.chbNoBackup.isChecked():
+                ws_input.append(table[j])
 
-        if not self.chbNoBackup.isChecked():
-            ws_log.append([datetime.now().strftime("%H:%M:%S"), 'Дублируем исходную excel таблицу в этот файл'])
-            ws_input = wb_log.create_sheet('Исходная таблица')
-            for table_row in table:
-                row = []
-                for cell in table_row:
-                    row.append(cell)
-                ws_input.append(row)
-        # Удаляем значение в ячейке если это телефон и он есть у партнера
+        # Удаляем значение в ячейке если это телефон и он есть у партнера, сортируя телефоны от большого к маленькому
         table_rez = []
         self.progressBar.setMaximum(len(table) - 1)
         for j, row in enumerate(table):
@@ -984,20 +978,21 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             phone_cells_index = []
             phone_cells = []
             for k, cell in enumerate(row):
-                if len(str(l(cell))) < 10 or len(str(l(cell))) > 11:
+                cell2phone = format_phone(cell)
+                if len(str(cell2phone)) < 10 or len(str(cell2phone)) > 11:
                     table_rez[j].append(cell)
                 else:
-                    if fine_phone(l(cell)) in self.phones:
+                    if cell2phone in self.phones:
                         table_rez[j].append('')
                     else:
                         phone_cells_index.append(k)
-                        phone_cells.append(l(fine_phone(cell)))
-                        table_rez[j].append(str(l(fine_phone(cell))))
+                        phone_cells.append(format_phone(cell))
+                        table_rez[j].append(format_phone(cell))
             phone_cells = sorted(phone_cells, reverse=True)
             i = 0
             for k, cell in enumerate(row):
                 if k in phone_cells_index:
-                    table_rez[j][k] = str(l(fine_phone(phone_cells[i])))
+                    table_rez[j][k] = phone_cells[i]
                     i += 1
         self.progressBar.setValue(len(table) - 1)
         ws_rez = wb_log.create_sheet('Без телефонных дублей')
