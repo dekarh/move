@@ -981,14 +981,24 @@ class MainWindowSlots(Ui_Form):   # Определяем функции, кот�
             if not (j % 100):
                 self.progressBar.setValue(j)
             table_rez.append([])
-            for cell in row:
+            phone_cells_index = []
+            phone_cells = []
+            for k, cell in enumerate(row):
                 if len(str(l(cell))) < 10 or len(str(l(cell))) > 11:
                     table_rez[j].append(cell)
                 else:
                     if fine_phone(l(cell)) in self.phones:
                         table_rez[j].append('')
                     else:
+                        phone_cells_index.append(k)
+                        phone_cells.append(l(fine_phone(cell)))
                         table_rez[j].append(str(l(fine_phone(cell))))
+            phone_cells = sorted(phone_cells, reverse=True)
+            i = 0
+            for k, cell in enumerate(row):
+                if k in phone_cells_index:
+                    table_rez[j][k] = str(l(fine_phone(phone_cells[i])))
+                    i += 1
         self.progressBar.setValue(len(table) - 1)
         ws_rez = wb_log.create_sheet('Без телефонных дублей')
         for row in table_rez:
