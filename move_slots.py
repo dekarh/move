@@ -9,7 +9,7 @@ import string
 import bz2
 from string import digits
 from random import random
-from dateutil.parser import parse
+#from dateutil.parser import parse
 from collections import OrderedDict
 
 from datetime import datetime, timedelta, time
@@ -302,11 +302,11 @@ IN_IDS = ['ID','ИД_КЛИЕНТА','CLIENT_ID']
 IN_SNILS = ['СНИЛС', 'СТРАХОВОЙ_НОМЕР', 'СТРАХОВОЙ НОМЕР', 'NUMBER','СТРАХОВОЙНОМЕР']
 IN_NAMES = ['ID', 'СНИЛС', 'СТРАХОВОЙ_НОМЕР', 'СТРАХОВОЙ НОМЕР', 'NUMBER', 'ФАМИЛИЯ', 'ИМЯ', 'ОТЧЕСТВО', 'ФИО']
 
-DIR4MOVE = '/home/da3/Move/'
-DIR4IMPORT = '/home/da3/CheckLoad/'
-DIR4CFGIMPORT = '/home/da3/CheckLoad/cfg/'
-DIR4PCHECK = '/home/da3/PasportChecks/'
-DIR4DELDOUBLESPHONES = '/home/da3/DelDoublesPhones/'
+DIR4MOVE = '/home/da3/Beagle/-Transfer/Move/'
+DIR4IMPORT = '/home/da3/Beagle/-Transfer/CheckLoad/'
+DIR4CFGIMPORT = '/home/da3/Beagle/-Transfer/CheckLoad/cfg/'
+DIR4PCHECK = '/home/da3/Beagle/-Transfer/PasportChecks/'
+DIR4DELDOUBLESPHONES = '/home/da3/Beagle/-Transfer/DelDoublesPhones/'
 
 
 class MainWindowSlots(Ui_Form):   # Определяем функции, которые будем вызывать в слотах

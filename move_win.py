@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'move_win.ui'
 #
-# Created by: PyQt5 UI code generator 5.11.2
+# Created by: PyQt5 UI code generator 5.10.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -631,7 +631,7 @@ class Ui_Form(object):
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Form"))
-        self.leDir.setText(_translate("Form", "/home/da3/Загрузки/2019-04/"))
+        self.leDir.setText(_translate("Form", "/home/da3/Загрузки/2019-10/"))
         self.pbFond.setText(_translate("Form", "Фонд"))
         self.pbAgent.setText(_translate("Form", "Агент"))
         self.pbSigner.setText(_translate("Form", "Подписант"))
